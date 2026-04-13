@@ -25,7 +25,7 @@ export default function Navbar({ onMenuClick }) {
         </svg>
       </button>
 
-      <h1 className="text-xl font-bold text-white tracking-tight">{title}</h1>
+      <h1 className="text-[26px] font-bold text-white uppercase tracking-widest">{title}</h1>
 
       <div className="ml-auto flex items-center gap-6">
         <div className="hidden sm:flex flex-col items-end">

@@ -118,7 +118,7 @@ export default function Sidebar({ isOpen, onClose }) {
               to={item.path}
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-4 px-5 py-3.5 rounded-xl text-[14px] font-medium tracking-normal transition-all duration-200 group
+                `flex items-center gap-4 px-5 py-3.5 rounded-xl text-[18px] font-medium tracking-normal transition-all duration-200 group
                 ${isActive
                   ? 'bg-brand-primary/10 text-brand-primary'
                   : 'text-brand-secondary hover:bg-white-[0.02] hover:text-white'
