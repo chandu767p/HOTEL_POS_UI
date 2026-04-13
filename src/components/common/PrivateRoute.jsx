@@ -8,8 +8,11 @@ export default function PrivateRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+      <div className="min-h-screen flex items-center justify-center bg-dark-900">
+        <div className="text-center group">
+          <LoadingSpinner size="lg" className="mx-auto mb-6 drop-shadow-[0_0_15px_rgba(168,217,106,0.3)]" />
+          <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-40 group-hover:opacity-100 transition-opacity duration-700">Authorizing Proxy Access...</p>
+        </div>
       </div>
     );
   }

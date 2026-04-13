@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import Modal from '../components/common/Modal';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function MenuManager() {
   const [categories, setCategories] = useState([]);
@@ -35,11 +36,11 @@ export default function MenuManager() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [addToast]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // ——— Category CRUD ———
+  // Category CRUD
   const openAddCat = () => {
     setCatForm({ name: '', description: '' });
     setCatModal({ open: true, editing: null });
@@ -58,7 +59,7 @@ export default function MenuManager() {
         addToast('Category updated', 'success');
       } else {
         await api.post('/menu/categories', catForm);
-        addToast('Category created', 'success');
+        addToast('Category added', 'success');
       }
       setCatModal({ open: false, editing: null });
       fetchData();
@@ -69,7 +70,7 @@ export default function MenuManager() {
     }
   };
   const handleDeleteCat = async (cat) => {
-    if (!window.confirm(`Delete category "${cat.name}"? It must be empty.`)) return;
+    if (!window.confirm(`Delete category "${cat.name}"? This will remove all items in it if confirmed.`)) return;
     try {
       await api.delete(`/menu/categories/${cat._id}`);
       addToast('Category deleted', 'success');
@@ -80,7 +81,7 @@ export default function MenuManager() {
     }
   };
 
-  // ——— Item CRUD ———
+  // Item CRUD
   const openAddItem = () => {
     setItemForm({ name: '', price: '', description: '', category: categories[0]?._id || '', kitchen: '', isAvailable: true });
     setItemModal({ open: true, editing: null });
@@ -108,7 +109,7 @@ export default function MenuManager() {
         addToast('Item updated', 'success');
       } else {
         await api.post('/menu/items', itemForm);
-        addToast('Item added to menu', 'success');
+        addToast('Item added', 'success');
       }
       setItemModal({ open: false, editing: null });
       fetchData();
@@ -119,10 +120,10 @@ export default function MenuManager() {
     }
   };
   const handleDeleteItem = async (item) => {
-    if (!window.confirm(`Remove "${item.name}" from the menu?`)) return;
+    if (!window.confirm(`Delete item "${item.name}" from the menu?`)) return;
     try {
       await api.delete(`/menu/items/${item._id}`);
-      addToast('Item removed', 'success');
+      addToast('Item deleted', 'success');
       fetchData();
     } catch (err) {
       addToast(err.message, 'error');
@@ -131,7 +132,7 @@ export default function MenuManager() {
   const handleToggleAvailable = async (item) => {
     try {
       await api.put(`/menu/items/${item._id}`, { isAvailable: !item.isAvailable });
-      addToast(`${item.name} ${!item.isAvailable ? 'enabled' : 'disabled'}`, 'success');
+      addToast(`${item.name} state changed to ${!item.isAvailable ? 'Available' : 'Unavailable'}`, 'success');
       fetchData();
     } catch (err) {
       addToast(err.message, 'error');
@@ -143,121 +144,157 @@ export default function MenuManager() {
     : items.filter(i => i.category?._id === selectedCategoryId);
 
   if (loading) return (
-    <div className="flex items-center justify-center h-full p-12">
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-400 font-bold text-xs uppercase tracking-widest">Loading menu...</p>
-      </div>
+    <div className="flex items-center justify-center p-32">
+      <div className="w-12 h-12 border-4 border-slate-200 border-t-brand-primary rounded-full animate-spin"></div>
     </div>
   );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="max-w-[1600px] mx-auto py-2">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-6 mb-12">
         <div>
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Menu Management</h1>
-          <p className="text-gray-500 font-medium mt-1">{items.length} items across {categories.length} categories</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Menu Tools</h1>
+          <p className="text-slate-400 text-sm mt-3 font-semibold uppercase tracking-wider">{items.length} items across {categories.length} categories</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={openAddCat} className="bg-white border-2 border-gray-200 text-gray-700 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm">
-            + Category
+          <button onClick={openAddCat} className="btn-secondary px-6 text-xs uppercase tracking-widest font-bold">
+            New Category
           </button>
-          <button onClick={openAddItem} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-100">
-            + Menu Item
+          <button onClick={openAddItem} className="btn-primary px-6 text-xs uppercase tracking-widest font-bold">
+            New Item
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Categories */}
-        <div className="lg:col-span-1">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 px-1">Collections</p>
-          <div className="space-y-2">
-            <button
-              onClick={() => setSelectedCategoryId('all')}
-              className={`w-full text-left px-4 py-3.5 rounded-2xl text-sm font-bold transition-all
-                ${selectedCategoryId === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600'}`}
-            >
-              All Items
-              <span className={`float-right text-xs font-black ${selectedCategoryId === 'all' ? 'text-indigo-200' : 'text-gray-400'}`}>{items.length}</span>
-            </button>
-
-            {categories.map(cat => (
-              <div key={cat._id} className="group relative">
-                <button
-                  onClick={() => setSelectedCategoryId(cat._id)}
-                  className={`w-full text-left px-4 py-3.5 rounded-2xl text-sm font-bold transition-all pr-16
-                    ${selectedCategoryId === cat._id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600'}`}
-                >
-                  {cat.name}
-                  <span className={`float-right text-xs font-black ${selectedCategoryId === cat._id ? 'text-indigo-200' : 'text-gray-400'}`}>
-                    {items.filter(i => i.category?._id === cat._id).length}
-                  </span>
-                </button>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openEditCat(cat)} className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 text-xs shadow-sm">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                  </button>
-                  <button onClick={() => handleDeleteCat(cat)} className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rose-500 hover:border-rose-200 text-xs shadow-sm">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12">
+        {/* Categories Sidebar */}
+        <div className="space-y-6">
+          <div>
+            <label className="form-label mb-4 block">Categories</label>
+            <div className="space-y-1.5">
+              <button
+                onClick={() => setSelectedCategoryId('all')}
+                className={`w-full text-left px-5 py-4 rounded-xl text-[13px] font-bold tracking-tight transition-all
+                    ${selectedCategoryId === 'all'
+                    ? 'bg-brand-primary text-white shadow-xl shadow-brand-primary/20'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/50'}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span>All Items</span>
+                  <span className={`text-[11px] font-black ${selectedCategoryId === 'all' ? 'text-white/60' : 'text-slate-300'}`}>{items.length}</span>
                 </div>
-              </div>
-            ))}
+              </button>
+
+              {categories.map(cat => (
+                <div key={cat._id} className="group relative">
+                  <button
+                    onClick={() => setSelectedCategoryId(cat._id)}
+                    className={`w-full text-left px-5 py-4 rounded-xl text-[13px] font-bold tracking-tight transition-all pr-24
+                        ${selectedCategoryId === cat._id
+                        ? 'bg-brand-primary text-white shadow-xl shadow-brand-primary/20'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/50'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="truncate">{cat.name}</span>
+                      <span className={`text-[11px] font-black ${selectedCategoryId === cat._id ? 'text-white/60' : 'text-slate-300'}`}>
+                        {items.filter(i => i.category?._id === cat._id).length}
+                      </span>
+                    </div>
+                  </button>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openEditCat(cat); }}
+                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteCat(cat); }}
+                      className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Items Grid */}
-        <div className="lg:col-span-3">
+        {/* Master Registry Grid */}
+        <div>
           {displayedItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 border-4 border-dashed border-gray-100 rounded-3xl bg-white">
-              <div className="text-4xl mb-3">🥐</div>
-              <p className="text-gray-400 font-bold text-sm">No items in this category yet</p>
-              <button onClick={openAddItem} className="mt-3 text-indigo-600 font-black text-xs uppercase tracking-widest hover:text-indigo-800">
-                Add First Item →
-              </button>
+            <div className="py-40 text-center bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[2.5rem]">
+              <div className="w-20 h-20 rounded-3xl bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-[11px]">No items in this category</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {displayedItems.map(item => (
                 <div
                   key={item._id}
-                  className={`bg-white border-2 rounded-3xl p-5 flex gap-4 transition-all group hover:shadow-lg
-                    ${item.isAvailable === false ? 'border-gray-100 opacity-60' : 'border-gray-100 hover:border-indigo-100'}`}
+                  className={`card p-8 group transition-all duration-300 relative
+                    ${item.isAvailable === false ? 'opacity-40 grayscale' : 'hover:border-slate-300'}`}
                 >
-                  <div className="w-16 h-16 bg-gray-50 rounded-2xl shrink-0 flex items-center justify-center text-gray-300 font-black text-xl border border-gray-100">
-                    {item.name.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="text-gray-900 font-black text-base leading-tight truncate pr-2">{item.name}</h3>
-                      <span className="text-indigo-600 font-black text-base shrink-0">${item.price.toFixed(2)}</span>
+                  <div className="flex gap-6">
+                    <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-2xl shrink-0 flex items-center justify-center text-brand-primary font-black text-2xl group-hover:bg-brand-primary/5 transition-colors">
+                      {item.name.charAt(0).toUpperCase()}
                     </div>
-                    <p className="text-gray-400 text-xs mb-2 line-clamp-1 leading-relaxed">{item.description || 'No description'}</p>
-                    <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                      <span className="text-[9px] bg-indigo-50 text-indigo-500 px-2.5 py-1 rounded-lg font-black uppercase tracking-wider">{item.category?.name}</span>
-                      {item.kitchen && (() => { const k = kitchens.find(k => k._id === (item.kitchen?._id || item.kitchen)); return k ? <span className="text-[9px] font-black uppercase px-2 py-1 rounded-lg text-white" style={{ backgroundColor: k.displayColor }}>{k.name}</span> : null; })()}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="sr-only"></span>
-                      <div className="flex gap-1.5 items-center">
-                        {/* Available toggle */}
-                        <button
-                          onClick={() => handleToggleAvailable(item)}
-                          className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all
-                            ${item.isAvailable !== false ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
-                          title={item.isAvailable !== false ? 'Mark Unavailable' : 'Mark Available'}
-                        >
-                          {item.isAvailable !== false ? '● Available' : '○ Sold Out'}
-                        </button>
-                        <button onClick={() => openEditItem(item)} className="w-7 h-7 rounded-xl bg-gray-50 text-gray-400 hover:bg-indigo-600 hover:text-white flex items-center justify-center transition-all border border-gray-100">
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                        </button>
-                        <button onClick={() => handleDeleteItem(item)} className="w-7 h-7 rounded-xl bg-gray-50 text-gray-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all border border-gray-100">
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-slate-900 font-bold text-lg tracking-tight truncate pr-4 group-hover:text-brand-primary transition-colors">{item.name}</h3>
+                        <span className="text-brand-primary font-black text-xl leading-none">${item.price.toFixed(2)}</span>
                       </div>
+                      <p className="text-slate-500 text-[13px] font-semibold leading-relaxed line-clamp-2 mb-4 h-9">
+                        {item.description || 'No description available for this item.'}
+                      </p>
+
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="badge bg-slate-100 text-slate-500 border border-slate-200 py-1 px-3">
+                          {item.category?.name}
+                        </span>
+                        {item.kitchen && (() => {
+                          const k = kitchens.find(k => k._id === (item.kitchen?._id || item.kitchen));
+                          return k ? (
+                            <span className="badge py-1 px-3 border border-slate-200 text-white shadow-sm" style={{ backgroundColor: k.displayColor }}>
+                              {k.name}
+                            </span>
+                          ) : null;
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-4">
+                    <button
+                      onClick={() => handleToggleAvailable(item)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all border
+                        ${item.isAvailable !== false
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-500 hover:text-white'
+                          : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-200 hover:text-slate-600'}`}
+                    >
+                      <div className={`w-1.5 h-1.5 rounded-full ${item.isAvailable !== false ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'}`}></div>
+                      {item.isAvailable !== false ? 'Available' : 'Unavailable'}
+                    </button>
+
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openEditItem(item)}
+                        className="p-2.5 rounded-lg bg-slate-50 text-slate-400 hover:text-slate-900 border border-slate-100 hover:border-slate-200 transition-all"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteItem(item)}
+                        className="p-2.5 rounded-lg bg-slate-50 text-slate-400 hover:text-rose-500 border border-slate-100 hover:border-rose-100 transition-all"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -268,114 +305,119 @@ export default function MenuManager() {
       </div>
 
       {/* Category Modal */}
-      <Modal isOpen={catModal.open} onClose={() => setCatModal({ open: false, editing: null })} title={catModal.editing ? 'Edit Category' : 'New Category'}>
-        <form onSubmit={handleSaveCat} className="space-y-5 py-2">
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Category Name *</label>
+      <Modal isOpen={catModal.open} onClose={() => setCatModal({ open: false, editing: null })} title={catModal.editing ? 'Edit Category' : 'Add Category'}>
+        <form onSubmit={handleSaveCat} className="space-y-8 pt-4">
+          <div className="space-y-2">
+            <label className="form-label">Category Name *</label>
             <input
-              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 transition-all"
+              className="form-input"
               value={catForm.name}
               onChange={e => setCatForm(p => ({ ...p, name: e.target.value }))}
-              placeholder="e.g. Desserts"
+              placeholder="e.g. Mains"
               required
-              autoFocus
             />
           </div>
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Description (optional)</label>
-            <input
-              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-3 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 transition-all"
+          <div className="space-y-2">
+            <label className="form-label">Description (optional)</label>
+            <textarea
+              className="form-input min-h-[100px] py-4"
               value={catForm.description}
               onChange={e => setCatForm(p => ({ ...p, description: e.target.value }))}
-              placeholder="Short description"
+              placeholder="Description..."
             />
           </div>
-          <button disabled={submitting} type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-xs shadow-lg shadow-indigo-100">
-            {submitting ? 'Saving...' : catModal.editing ? 'Update Category' : 'Create Category'}
+          <button disabled={submitting} type="submit" className="btn-primary w-full py-5 text-[12px] uppercase tracking-[0.2em]">
+            {submitting ? 'Saving...' : catModal.editing ? 'Save Category' : 'Add Category'}
           </button>
         </form>
       </Modal>
 
       {/* Item Modal */}
-      <Modal isOpen={itemModal.open} onClose={() => setItemModal({ open: false, editing: null })} title={itemModal.editing ? 'Edit Menu Item' : 'New Menu Item'} size="md">
-        <form onSubmit={handleSaveItem} className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Item Name *</label>
+      <Modal isOpen={itemModal.open} onClose={() => setItemModal({ open: false, editing: null })} title={itemModal.editing ? 'Edit Item' : 'Add Item'} size="md">
+        <form onSubmit={handleSaveItem} className="space-y-8 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <div className="sm:col-span-2 space-y-2">
+              <label className="form-label">Item Name *</label>
               <input
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-3.5 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 transition-all"
+                className="form-input"
                 value={itemForm.name}
                 onChange={e => setItemForm(p => ({ ...p, name: e.target.value }))}
-                placeholder="e.g. Truffle Pasta"
+                placeholder="e.g. Hamburger"
                 required
-                autoFocus
               />
             </div>
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Price ($) *</label>
+
+            <div className="space-y-2">
+              <label className="form-label">Price ($) *</label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-3.5 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 transition-all"
+                className="form-input"
                 value={itemForm.price}
                 onChange={e => setItemForm(p => ({ ...p, price: e.target.value }))}
                 placeholder="0.00"
                 required
               />
             </div>
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Category *</label>
+
+            <div className="space-y-2">
+              <label className="form-label">Category *</label>
               <select
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-3.5 text-gray-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 transition-all"
+                className="form-input"
                 value={itemForm.category}
                 onChange={e => setItemForm(p => ({ ...p, category: e.target.value }))}
                 required
               >
-                <option value="">Select category</option>
+                <option value="">Select Category</option>
                 {categories.map(cat => (
                   <option key={cat._id} value={cat._id}>{cat.name}</option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Kitchen (optional)</label>
+
+            <div className="space-y-2">
+              <label className="form-label">Kitchen Station</label>
               <select
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-3.5 text-gray-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 transition-all"
+                className="form-input"
                 value={itemForm.kitchen}
                 onChange={e => setItemForm(p => ({ ...p, kitchen: e.target.value }))}
               >
-                <option value="">No kitchen assigned</option>
+                <option value="">None</option>
                 {kitchens.map(k => (
                   <option key={k._id} value={k._id}>{k.name}</option>
                 ))}
               </select>
             </div>
-            <div className="col-span-2">
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Description</label>
+
+            <div className="space-y-2 flex flex-col justify-end">
+              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl h-[58px]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Available to Order</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={itemForm.isAvailable}
+                    onChange={e => setItemForm(p => ({ ...p, isAvailable: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-400 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:bg-white peer-checked:bg-emerald-500"></div>
+                </label>
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 space-y-2">
+              <label className="form-label">Description</label>
               <textarea
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-3 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 transition-all resize-none"
-                rows={3}
+                className="form-input min-h-[120px] py-4"
                 value={itemForm.description}
                 onChange={e => setItemForm(p => ({ ...p, description: e.target.value }))}
-                placeholder="Describe this dish..."
+                placeholder="Item details..."
               />
             </div>
-            <div className="col-span-2 flex items-center gap-3">
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={itemForm.isAvailable}
-                  onChange={e => setItemForm(p => ({ ...p, isAvailable: e.target.checked }))}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-              </label>
-              <span className="text-sm font-bold text-gray-700">Available for ordering</span>
-            </div>
           </div>
-          <button disabled={submitting} type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-xs shadow-lg shadow-indigo-100 mt-2">
-            {submitting ? 'Saving...' : itemModal.editing ? 'Update Item' : 'Add to Menu'}
+
+          <button disabled={submitting} type="submit" className="btn-primary w-full py-5 text-[12px] uppercase tracking-[0.2em]">
+            {submitting ? 'Saving...' : itemModal.editing ? 'Save Item' : 'Add Item'}
           </button>
         </form>
       </Modal>

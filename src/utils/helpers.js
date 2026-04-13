@@ -19,22 +19,30 @@ export const formatCurrency = (value) => {
 };
 
 export const statusColors = {
-  // Lead statuses
-  new: 'bg-blue-100 text-blue-700',
-  contacted: 'bg-yellow-100 text-yellow-700',
-  qualified: 'bg-purple-100 text-purple-700',
-  proposal: 'bg-orange-100 text-orange-700',
-  negotiation: 'bg-pink-100 text-pink-700',
-  won: 'bg-green-100 text-green-700',
-  lost: 'bg-red-100 text-red-700',
-  // User roles
-  admin: 'bg-red-100 text-red-700',
-  manager: 'bg-purple-100 text-purple-700',
-  sales: 'bg-blue-100 text-blue-700',
-  support: 'bg-teal-100 text-teal-700',
-  // Generic active
-  true: 'bg-green-100 text-green-700',
-  false: 'bg-gray-100 text-gray-500',
+  // Generic / CRM
+  new: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+  contacted: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+  qualified: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+  proposal: 'bg-orange-500/10 text-orange-400 border border-orange-500/20',
+  won: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+  lost: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
+  
+  // POS Specific
+  pending: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+  preparing: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+  served: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
+  paid: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+  cancelled: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
+
+  // Roles
+  admin: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
+  manager: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+  waiter: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+  chef: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+  
+  // Boolean state
+  true: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+  false: 'bg-white/5 text-gray-500 border border-white/10',
 };
 
 export const capitalize = (str) =>

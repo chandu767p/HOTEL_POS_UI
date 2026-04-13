@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const KITCHEN_STATUS_COLORS = {
-  pending:   'bg-amber-100 text-amber-700 border-amber-200',
-  preparing: 'bg-blue-100 text-blue-700 border-blue-200',
-  ready:     'bg-emerald-100 text-emerald-700 border-emerald-200',
-  completed: 'bg-gray-100 text-gray-500 border-gray-200',
+  pending: 'bg-amber-50 text-amber-600 border-amber-100',
+  preparing: 'bg-blue-50 text-blue-600 border-blue-100',
+  ready: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+  completed: 'bg-slate-50 text-slate-300 border-slate-100',
 };
 
 export default function OrderPortal() {
@@ -55,7 +56,6 @@ export default function OrderPortal() {
       }
 
       // Load existing order if occupied
-      // NOTE: getTables populates currentOrder as a full object — extract ._id safely
       const currentOrderId = currentTable.currentOrder?._id || currentTable.currentOrder;
       if (currentOrderId) {
         const orderRes = await api.get(`/orders/${currentOrderId}`);
@@ -75,7 +75,7 @@ export default function OrderPortal() {
     } finally {
       setLoading(false);
     }
-  }, [tableId]);
+  }, [tableId, addToast, navigate]);
 
   useEffect(() => {
     fetchData();
@@ -114,7 +114,7 @@ export default function OrderPortal() {
   const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const placeOrder = async () => {
-    if (cart.length === 0) return addToast('Cart is empty — add some items', 'warning');
+    if (cart.length === 0) return addToast('Cart is empty', 'warning');
     setSubmitting(true);
     try {
       if (existingOrder) {
@@ -133,11 +133,8 @@ export default function OrderPortal() {
   };
 
   if (loading) return (
-    <div className="flex items-center justify-center h-full p-12">
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-400 font-bold text-xs uppercase tracking-widest">Loading POS Terminal...</p>
-      </div>
+    <div className="flex items-center justify-center p-32">
+      <LoadingSpinner size="lg" />
     </div>
   );
 
@@ -146,90 +143,101 @@ export default function OrderPortal() {
   );
 
   return (
-    <div className="h-[calc(100vh-80px)] flex gap-0 md:gap-6 p-4 md:p-6">
+    <div className="h-[calc(100vh-140px)] flex gap-6 p-1">
 
-      {/* ——— Left: Menu ——— */}
-      <div className="flex-1 flex flex-col bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden min-w-0">
+      {/* ——— Left: Menu Selection ——— */}
+      <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Top bar */}
-        <div className="p-5 border-b border-gray-100 flex flex-wrap justify-between items-center gap-3 bg-gray-50/50 shrink-0">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/tables')}
-              className="w-9 h-9 rounded-2xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:border-gray-300 transition-all shadow-sm"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div>
-              <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none">Table {table?.number}</h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+        {/* Table Header */}
+        <div className="card mb-6 overflow-hidden flex-shrink-0 border-slate-200">
+          <div className="px-8 py-5 flex items-center justify-between bg-white">
+            <div className="flex items-center gap-5">
+              <button
+                onClick={() => navigate('/tables')}
+                className="p-3 rounded-2xl bg-slate-50 text-slate-400 border border-slate-100 hover:text-brand-primary hover:border-brand-primary/20 hover:bg-white transition-all active:scale-95 shadow-sm"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tighter">Table {table?.number}</h1>
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">
                   {existingOrder ? `Order #${existingOrder._id.slice(-6).toUpperCase()}` : 'New Order'}
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Category tabs */}
-          <div className="flex gap-2 flex-wrap">
-            {categories.map(cat => (
-              <button
-                key={cat._id}
-                onClick={() => setSelectedCategory(cat._id)}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-                  ${selectedCategory === cat._id
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                    : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-              >
-                {cat.name}
-              </button>
-            ))}
+            <div className="flex gap-2.5 overflow-x-auto pb-1 max-w-[60%] custom-scrollbar">
+              {categories.map(cat => (
+                <button
+                  key={cat._id}
+                  onClick={() => setSelectedCategory(cat._id)}
+                  className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 border whitespace-nowrap
+                    ${selectedCategory === cat._id
+                      ? 'bg-brand-primary text-white border-brand-primary shadow-xl shadow-brand-primary/20'
+                      : 'bg-slate-50 text-slate-400 border-slate-100 hover:text-slate-900 hover:border-slate-300 shadow-sm'}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Items grid */}
-        <div className="flex-1 overflow-y-auto p-5">
+        {/* Units Grid */}
+        <div className="flex-1 overflow-y-auto pr-3 custom-scrollbar">
           {filteredItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-300">
-              <div className="text-5xl mb-3">🍽️</div>
-              <p className="font-black text-sm uppercase tracking-widest">No items in this category</p>
+            <div className="py-40 text-center bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[2.5rem]">
+              <div className="w-20 h-20 rounded-3xl bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[11px]">Category Registry Empty</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredItems.map(item => {
                 const inCart = cart.find(c => c.menuItem === item._id);
                 return (
                   <button
                     key={item._id}
                     onClick={() => addToCart(item)}
-                    className={`relative group p-5 rounded-3xl text-left flex flex-col justify-between h-36 transition-all active:scale-95
+                    className={`p-6 rounded-[2rem] text-left h-48 flex flex-col justify-between transition-all relative overflow-hidden group border-2
                       ${inCart
-                        ? 'bg-indigo-50 border-2 border-indigo-200 shadow-md shadow-indigo-100'
-                        : 'bg-gray-50 border-2 border-transparent hover:bg-white hover:border-gray-200 hover:shadow-lg'}`}
+                        ? 'bg-brand-primary/5 border-brand-primary/30 shadow-2xl shadow-brand-primary/5'
+                        : 'bg-white border-slate-100 hover:border-slate-300 hover:shadow-xl shadow-sm'}`}
                   >
                     {inCart && (
-                      <div className="absolute top-3 right-3 bg-indigo-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center">
+                      <div className="absolute top-5 right-5 bg-brand-primary text-white text-[11px] font-black w-8 h-8 rounded-xl flex items-center justify-center shadow-xl shadow-brand-primary/20 scale-110">
                         {inCart.quantity}
                       </div>
                     )}
                     <div>
-                      <h3 className={`font-bold text-sm leading-tight ${inCart ? 'text-indigo-700' : 'text-gray-900'}`}>
+                      <h3 className={`font-black text-base leading-tight tracking-tight transition-colors mb-3 pr-8 ${inCart ? 'text-brand-primary' : 'text-slate-900'}`}>
                         {item.name}
                       </h3>
                       {item.kitchenData && (
-                        <div
-                          className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white"
-                          style={{ backgroundColor: item.kitchenData.displayColor }}
+                        <span
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-sm"
+                          style={{ backgroundColor: item.kitchenData.displayColor || '#3B82F6' }}
                         >
+                          <div className="w-1.5 h-1.5 rounded-full bg-white/40"></div>
                           {item.kitchenData.name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-end justify-between mt-4">
+                      <span className={`font-black text-2xl tracking-tighter ${inCart ? 'text-brand-primary' : 'text-slate-900'}`}>
+                        ${item.price.toFixed(2)}
+                      </span>
+                      {!inCart && (
+                        <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-brand-primary group-hover:text-white transition-all shadow-inner border border-slate-100">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
                         </div>
                       )}
                     </div>
-                    <span className={`font-black text-lg tracking-tight ${inCart ? 'text-indigo-600' : 'text-gray-900'}`}>
-                      ${item.price.toFixed(2)}
-                    </span>
                   </button>
                 );
               })}
@@ -237,21 +245,21 @@ export default function OrderPortal() {
           )}
         </div>
 
-        {/* Kitchen status strip for existing order */}
+        {/* Pipeline Strip */}
         {existingOrder?.kitchenOrders?.length > 0 && (
-          <div className="border-t border-gray-100 bg-gray-50/50 p-4 shrink-0">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Kitchen Progress</p>
-            <div className="flex gap-2 flex-wrap">
+          <div className="card mt-6 py-6 px-8 border-slate-200 shadow-lg shadow-slate-200/20">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-5">Transmission Pipeline</p>
+            <div className="flex gap-4 flex-wrap">
               {existingOrder.kitchenOrders.map((ko, i) => (
                 <div
                   key={i}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black border tracking-widest uppercase ${KITCHEN_STATUS_COLORS[ko.status] || 'bg-gray-100 text-gray-500'}`}
+                  className={`flex items-center gap-3.5 px-5 py-2.5 rounded-xl text-[10px] font-black border tracking-widest uppercase transition-all shadow-sm ${KITCHEN_STATUS_COLORS[ko.status] || 'bg-slate-50 text-slate-300'}`}
                 >
                   <div
-                    className="w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: ko.kitchen?.displayColor || '#6366f1' }}
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ backgroundColor: ko.kitchen?.displayColor || '#6FC4E8', boxShadow: `0 0 10px ${ko.kitchen?.displayColor}44` }}
                   ></div>
-                  {ko.kitchen?.name || 'Kitchen'}: {ko.status}
+                  {ko.kitchen?.name || 'NODE'}: {ko.status}
                 </div>
               ))}
             </div>
@@ -259,86 +267,89 @@ export default function OrderPortal() {
         )}
       </div>
 
-      {/* ——— Right: Cart ——— */}
-      <div className="w-80 lg:w-96 flex flex-col bg-gray-900 rounded-3xl p-6 shadow-2xl relative overflow-hidden shrink-0">
-        <div className="relative z-10 flex flex-col h-full">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-black text-white tracking-tight">
-              {existingOrder ? 'Update Order' : 'New Order'}
-            </h2>
-            <div className="flex items-center gap-2">
-              {cart.length > 0 && (
-                <button onClick={() => setCart([])} className="text-[10px] font-black text-white/30 hover:text-rose-400 transition-colors uppercase tracking-widest">
-                  Clear
-                </button>
-              )}
-              <span className="bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                {cart.reduce((s, i) => s + i.quantity, 0)} items
-              </span>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-            {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full opacity-20 py-16">
-                <div className="text-5xl mb-3">🛒</div>
-                <p className="text-white font-black text-[10px] uppercase tracking-[0.3em]">Tap items to add</p>
-              </div>
-            ) : (
-              cart.map(item => {
-                const kitchenData = kitchens.find(k => k._id === item.kitchen);
-                return (
-                  <div key={item.menuItem} className="bg-white/8 border border-white/10 p-4 rounded-2xl">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1 pr-2">
-                        <p className="text-white font-bold text-sm leading-tight">{item.name}</p>
-                        {kitchenData && (
-                          <span
-                            className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md mt-0.5 inline-block text-white"
-                            style={{ backgroundColor: kitchenData.displayColor + 'aa' }}
-                          >
-                            {kitchenData.name}
-                          </span>
-                        )}
-                      </div>
-                      <button onClick={() => removeFromCart(item.menuItem)} className="text-white/30 hover:text-rose-400 transition-colors shrink-0">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-1 bg-white/10 rounded-xl p-1">
-                        <button onClick={() => updateQuantity(item.menuItem, -1)} className="w-7 h-7 rounded-lg hover:bg-white/20 text-white flex items-center justify-center font-black text-sm transition-colors">−</button>
-                        <span className="text-white font-black text-sm w-7 text-center">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.menuItem, 1)} className="w-7 h-7 rounded-lg hover:bg-white/20 text-white flex items-center justify-center font-black text-sm transition-colors">+</button>
-                      </div>
-                      <p className="text-indigo-400 font-black">${(item.price * item.quantity).toFixed(2)}</p>
-                    </div>
-                  </div>
-                );
-              })
+      {/* ——— Right: Order Management ——— */}
+      <div className="w-[420px] card flex flex-col overflow-hidden border-slate-200 shadow-2xl shadow-slate-200/40">
+        <div className="px-8 py-8 flex items-center justify-between border-b border-slate-50 bg-white">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tighter">
+            {existingOrder ? 'Order' : 'Initialize Session'}
+          </h2>
+          <div className="flex items-center gap-4">
+            {cart.length > 0 && (
+              <button onClick={() => setCart([])} className="text-[10px] font-black text-slate-400 hover:text-rose-500 transition-colors uppercase tracking-[0.2em]">
+                Remove all
+              </button>
             )}
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
-            <div className="flex justify-between items-center">
-              <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Subtotal</p>
-              <p className="text-white font-black text-2xl tracking-tight">${total.toFixed(2)}</p>
-            </div>
-            <button
-              onClick={placeOrder}
-              disabled={submitting || cart.length === 0}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-black py-5 rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-widest shadow-xl shadow-indigo-900/30"
-            >
-              {submitting ? 'Processing...' : existingOrder ? '⟳ Update Order' : '✓ Place Order'}
-            </button>
+            <span className="badge bg-slate-50 border-slate-100 text-slate-500 font-black px-4 py-2 text-[10px] tracking-widest shadow-sm">
+              {cart.reduce((s, i) => s + i.quantity, 0)} Units
+            </span>
           </div>
         </div>
 
-        <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar bg-slate-50/20">
+          {cart.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center py-20">
+              <div className="w-16 h-16 rounded-[1.5rem] bg-white border border-slate-100 flex items-center justify-center mb-6 shadow-sm">
+                <svg className="w-8 h-8 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Table Empty</p>
+            </div>
+          ) : (
+            cart.map(item => {
+              const kitchenData = kitchens.find(k => k._id === item.kitchen);
+              return (
+                <div key={item.menuItem} className="bg-white border border-slate-100 p-6 rounded-3xl group transition-all hover:border-slate-300 hover:shadow-xl shadow-sm">
+                  <div className="flex justify-between items-start mb-5">
+                    <div className="flex-1 pr-6">
+                      <p className="text-slate-900 font-black text-base leading-tight group-hover:text-brand-primary transition-colors tracking-tight">{item.name}</p>
+                      {kitchenData && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: kitchenData.displayColor }}></div>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                            Route: {kitchenData.name}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => removeFromCart(item.menuItem)} className="text-slate-200 hover:text-rose-500 transition-colors p-1">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-2xl p-1.5 shadow-inner">
+                      <button onClick={() => updateQuantity(item.menuItem, -1)} className="w-9 h-9 rounded-xl hover:bg-white text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-200 flex items-center justify-center font-black text-lg transition-all shadow-none hover:shadow-sm">−</button>
+                      <span className="text-slate-900 font-black text-sm w-10 text-center tracking-tighter">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.menuItem, 1)} className="w-9 h-9 rounded-xl hover:bg-white text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-200 flex items-center justify-center font-black text-lg transition-all shadow-none hover:shadow-sm">+</button>
+                    </div>
+                    <p className="text-slate-900 font-black text-xl tracking-tighter">${(item.price * item.quantity).toFixed(2)}</p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="px-8 py-10 border-t border-slate-100 bg-white">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1.5">Total Valuation</p>
+              <div className="h-1 w-12 bg-brand-primary/20 rounded-full"></div>
+            </div>
+            <p className="text-slate-900 font-black text-5xl tracking-tighter">${total.toFixed(2)}</p>
+          </div>
+          <button
+            onClick={placeOrder}
+            disabled={submitting || cart.length === 0}
+            className="btn-primary w-full py-6 text-[12px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-brand-primary/30"
+          >
+            {submitting ? 'Processing...' : existingOrder ? '⟳ Update Order' : '✓ Place Order'}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+

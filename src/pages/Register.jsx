@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'waiter' });
@@ -13,11 +14,11 @@ export default function Register() {
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim()) e.name = 'Name is required';
-    if (!form.email.trim()) e.email = 'Email is required';
-    else if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = 'Invalid email';
-    if (!form.password) e.password = 'Password is required';
-    else if (form.password.length < 6) e.password = 'Min 6 characters';
+    if (!form.name.trim()) e.name = 'Identity name required';
+    if (!form.email.trim()) e.email = 'Access email required';
+    else if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = 'Malformed identity address';
+    if (!form.password) e.password = 'Security code required';
+    else if (form.password.length < 6) e.password = 'Min 6 character threshold';
     return e;
   };
 
@@ -43,38 +44,42 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute top-0 left-0 w-[700px] h-[700px] bg-indigo-50/50 rounded-full blur-[100px] -translate-y-1/2 -translate-x-1/3 z-0"></div>
-      
-      <div className="bg-white border border-gray-100 rounded-[3rem] shadow-2xl shadow-gray-200/50 w-full max-w-md overflow-hidden relative z-10">
-        <div className="bg-gray-50/50 px-8 py-10 text-center border-b border-gray-100">
-           <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-600 mx-auto mb-6 flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-indigo-100">
-            A
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Subtle Background Accents */}
+      <div className="absolute top-[-10%] left-[-5%] w-[800px] h-[800px] bg-brand-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-slate-200/50 rounded-full blur-[100px] pointer-events-none"></div>
+
+      <div className="card w-full max-w-lg p-12 relative z-10 animate-in fade-in zoom-in-95 duration-700 shadow-2xl shadow-brand-primary/5 border-slate-200">
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 rounded-[2rem] bg-slate-50 border border-slate-100 mx-auto mb-8 flex items-center justify-center shadow-sm">
+            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
           </div>
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter">Registration</h2>
-          <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-2">Activate new worker portal</p>
+          <h1 className="text-4xl font-black tracking-tighter mb-4 text-slate-900 border-b-4 border-brand-primary inline-block">Create Account</h1>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Register your restaurant account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-10 py-10 space-y-6">
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Legal Name</label>
-            <input className="w-full bg-gray-50/50 border-2 border-gray-50 rounded-3xl px-5 py-3.5 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all border-transparent focus:border-indigo-50" value={form.name} onChange={set('name')} placeholder="Full Name" />
-            {errors.name && <p className="text-rose-500 text-[10px] mt-1.5 ml-1 font-black italic uppercase tracking-tighter">{errors.name}</p>}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="form-label">Full Name</label>
+            <input className="form-input py-4" value={form.name} onChange={set('name')} placeholder="Your full name" />
+            {errors.name && <p className="text-[10px] text-rose-500 font-bold mt-1 ml-1 uppercase">{errors.name}</p>}
           </div>
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Work Email</label>
-            <input className="w-full bg-gray-50/50 border-2 border-gray-50 rounded-3xl px-5 py-3.5 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all border-transparent focus:border-indigo-50" type="email" value={form.email} onChange={set('email')} placeholder="email@ajark.com" />
-            {errors.email && <p className="text-rose-500 text-[10px] mt-1.5 ml-1 font-black italic uppercase tracking-tighter">{errors.email}</p>}
+
+          <div className="space-y-2">
+            <label className="form-label">Email</label>
+            <input className="form-input py-4" type="email" value={form.email} onChange={set('email')} placeholder="email@restaurant.com" />
+            {errors.email && <p className="text-[10px] text-rose-500 font-bold mt-1 ml-1 uppercase">{errors.email}</p>}
           </div>
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Terminal Password</label>
-            <input className="w-full bg-gray-50/50 border-2 border-gray-50 rounded-3xl px-5 py-3.5 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all border-transparent focus:border-indigo-50" type="password" value={form.password} onChange={set('password')} placeholder="Min 6 characters" />
-            {errors.password && <p className="text-rose-500 text-[10px] mt-1.5 ml-1 font-black italic uppercase tracking-tighter">{errors.password}</p>}
+
+          <div className="space-y-2">
+            <label className="form-label">Password</label>
+            <input className="form-input py-4" type="password" value={form.password} onChange={set('password')} placeholder="Min 6 characters" />
+            {errors.password && <p className="text-[10px] text-rose-500 font-bold mt-1 ml-1 uppercase">{errors.password}</p>}
           </div>
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Operations Role</label>
-            <select className="w-full bg-gray-50/50 border-2 border-gray-50 rounded-3xl px-5 py-3.5 text-gray-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all border-transparent focus:border-indigo-50 appearance-none cursor-pointer" value={form.role} onChange={set('role')}>
+
+          <div className="space-y-2">
+            <label className="form-label">Role</label>
+            <select className="form-input py-4 h-auto cursor-pointer" value={form.role} onChange={set('role')}>
               <option value="waiter">Waiter</option>
               <option value="chef">Chef</option>
               <option value="manager">Manager</option>
@@ -82,14 +87,16 @@ export default function Register() {
             </select>
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-gray-900 hover:bg-black disabled:opacity-50 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-gray-200 transition-all mt-4 uppercase tracking-widest text-xs active:scale-95">
-            {loading ? 'Processing...' : 'Register Worker'}
+          <button type="submit" disabled={loading} className="btn-primary w-full py-5 text-[12px] uppercase tracking-[0.3em] mt-4">
+            {loading ? <div className="flex items-center justify-center gap-3"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> <span>Creating...</span></div> : 'Create Account'}
           </button>
 
-          <p className="text-center text-xs font-bold text-gray-400 mt-6">
-            Already registered?{' '}
-            <Link to="/login" className="text-indigo-600 font-black hover:text-indigo-800 transition-colors underline decoration-indigo-100 decoration-2 underline-offset-4">Return to Sign In</Link>
-          </p>
+          <div className="text-center pt-8 border-t border-slate-100 mt-8">
+            <p className="text-[12px] text-slate-400 font-bold uppercase tracking-widest">
+              Already have an account?{' '}
+              <Link to="/login" className="text-brand-primary font-black hover:underline transition-all ml-1">Sign In</Link>
+            </p>
+          </div>
         </form>
       </div>
     </div>

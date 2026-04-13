@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -13,16 +14,15 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
-      toast.error('Email and password are required');
+      toast.error('Identity and access code required');
       return;
     }
     setLoading(true);
     try {
-      // FIX: Use actual form password — no more hardcoded override
       await login(form.email, form.password);
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.message || 'Login failed');
+      toast.error(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -31,42 +31,53 @@ export default function Login() {
   const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }));
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-50/50 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 z-0"></div>
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-50/50 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/3 z-0"></div>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Subtle Background Accents */}
+      <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] bg-brand-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-slate-200/50 rounded-full blur-[100px] pointer-events-none"></div>
 
-      <div className="bg-white border border-gray-100 rounded-[3rem] shadow-2xl shadow-gray-200/50 w-full max-w-md overflow-hidden relative z-10">
-        <div className="bg-gray-50/50 px-8 py-12 text-center border-b border-gray-100">
-          <div className="w-20 h-20 rounded-[2rem] bg-indigo-600 mx-auto mb-6 flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-indigo-200">
-            A
+      <div className="card w-full max-w-lg p-12 relative z-10 animate-in fade-in zoom-in-95 duration-700 shadow-2xl shadow-brand-primary/5 border-slate-200">
+        <div className="text-center mb-12">
+          <div className="w-20 h-20 rounded-[2rem] bg-slate-50 border border-slate-100 mx-auto mb-8 flex items-center justify-center shadow-sm">
+            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
           </div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tighter mb-2">AJARK POS</h1>
-          <p className="text-gray-400 font-bold text-xs uppercase tracking-widest">Sign in to your terminal</p>
+          <h1 className="text-5xl font-black tracking-tighter mb-4">
+            <span className="text-slate-900 border-b-4 border-brand-primary">Eden</span>
+            <span className="text-slate-900">Soft</span>
+            <span className="text-brand-primary ml-1 font-mono">X</span>
+          </h1>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Authentic</span>
+            <div className="w-1 h-1 rounded-full bg-slate-200"></div>
+            <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Secure</span>
+            <div className="w-1 h-1 rounded-full bg-slate-200"></div>
+            <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Optimized</span>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-10 py-10 space-y-8">
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">Email Address</label>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-2">
+            <label className="form-label">Email</label>
             <input
               type="email"
               value={form.email}
               onChange={set('email')}
               required
-              placeholder="admin@ajark.com"
-              className="w-full bg-gray-50 border-2 border-gray-100 rounded-3xl px-6 py-4 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all"
+              placeholder="e.g. administrator@edensoft.com"
+              className="form-input py-4 text-base"
               autoComplete="email"
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">Password</label>
+          <div className="space-y-2">
+            <label className="form-label">Password</label>
             <input
               type="password"
               value={form.password}
               onChange={set('password')}
               required
               placeholder="••••••••"
-              className="w-full bg-gray-50 border-2 border-gray-100 rounded-3xl px-6 py-4 text-gray-900 font-bold placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all"
+              className="form-input py-4 text-base"
               autoComplete="current-password"
             />
           </div>
@@ -74,28 +85,23 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gray-900 hover:bg-black disabled:opacity-50 text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-gray-300 transition-all flex items-center justify-center gap-3 active:scale-95"
+            className="btn-primary w-full py-5 text-[12px] uppercase tracking-[0.3em] mt-4"
           >
             {loading ? (
-              <>
-                <svg className="animate-spin w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                <span className="uppercase tracking-widest text-xs">Authenticating...</span>
-              </>
-            ) : <span className="uppercase tracking-widest text-xs">Access Terminal</span>}
+              <div className="flex items-center justify-center gap-4">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Signing in...</span>
+              </div>
+            ) : <span>Sign In</span>}
           </button>
 
-          <p className="text-center text-xs font-bold text-gray-400">
-            Need an account?{' '}
-            <Link to="/register" className="text-indigo-600 font-black hover:text-indigo-800 transition-colors">
-              Register Worker
-            </Link>
-          </p>
-
-          <div className="pt-4 border-t border-gray-50 text-center">
-            <p className="text-[10px] text-gray-300 font-black uppercase tracking-widest italic">Demo: admin@ajark.com / password123</p>
+          <div className="text-center pt-8 border-t border-slate-100 mt-8">
+            <p className="text-[12px] text-slate-400 font-bold uppercase tracking-widest">
+              New here?{' '}
+              <Link to="/register" className="text-brand-primary font-black hover:underline transition-all ml-1">
+                Create Account
+              </Link>
+            </p>
           </div>
         </form>
       </div>

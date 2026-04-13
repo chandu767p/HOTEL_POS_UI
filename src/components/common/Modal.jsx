@@ -20,30 +20,30 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
 
   return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      <div className={`relative bg-white rounded-2xl shadow-2xl w-full ${widths[size]} max-h-[90vh] flex flex-col`}>
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+      <div className={`relative bg-white rounded-2xl border border-slate-100 shadow-2xl w-full ${widths[size]} max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-white">
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">{title}</h2>
           <button
             onClick={onClose}
-            className="btn-icon rounded-full"
+            className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-8">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+          <div className="px-8 py-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
             {footer}
           </div>
         )}

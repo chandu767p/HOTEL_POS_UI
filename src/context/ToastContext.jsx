@@ -50,36 +50,39 @@ export function ToastProvider({ children }) {
   };
 
   const colors = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
+    success: 'bg-dark-900/90 border-emerald-500/20 text-brand-secondary backdrop-blur-md',
+    error: 'bg-dark-900/90 border-rose-500/20 text-brand-secondary backdrop-blur-md',
+    warning: 'bg-dark-900/90 border-amber-500/20 text-brand-secondary backdrop-blur-md',
+    info: 'bg-dark-900/90 border-brand-primary/20 text-brand-secondary backdrop-blur-md',
   };
 
   const iconColors = {
-    success: 'text-green-500',
-    error: 'text-red-500',
-    warning: 'text-yellow-500',
-    info: 'text-blue-500',
+    success: 'text-emerald-400',
+    error: 'text-rose-400',
+    warning: 'text-amber-400',
+    info: 'text-brand-primary',
   };
 
   return (
     <ToastContext.Provider value={toast}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full">
+      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 max-w-sm w-full">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`flex items-start gap-3 p-4 rounded-lg border shadow-lg ${colors[t.type]} animate-fade-in`}
+            className={`flex items-start gap-4 p-5 rounded-3xl border shadow-2xl ${colors[t.type]} animate-fade-in`}
           >
-            <span className={iconColors[t.type]}>{icons[t.type]}</span>
-            <p className="flex-1 text-sm font-medium">{t.message}</p>
+            <span className={`mt-0.5 ${iconColors[t.type]}`}>{icons[t.type]}</span>
+            <div className="flex-1">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-40 mb-1">{t.type}</p>
+              <p className="text-sm font-bold tracking-tight">{t.message}</p>
+            </div>
             <button
               onClick={() => removeToast(t.id)}
-              className="text-current opacity-60 hover:opacity-100 ml-auto"
+              className="text-gray-500 hover:text-white transition-colors ml-auto p-1"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>

@@ -46,7 +46,7 @@ const navItems = [
   },
   {
     path: '/users',
-    label: 'Workers',
+    label: 'Staff',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -84,7 +84,7 @@ export default function Sidebar({ isOpen, onClose }) {
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-20 lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 lg:hidden"
           onClick={onClose}
         />
       )}
@@ -92,65 +92,67 @@ export default function Sidebar({ isOpen, onClose }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full z-30 w-64 bg-white border-r border-gray-200 flex flex-col
-          transition-transform duration-200 ease-in-out shadow-sm
+          fixed top-0 left-0 h-full z-30 w-72 bg-dark-950 border-r border-white/5 flex flex-col text-white
+          transition-transform duration-300 ease-in-out shadow-2xl shadow-black/50
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:static lg:z-auto
         `}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white text-xl shadow-md">
-            A
-          </div>
-          <div>
-            <div className="font-bold text-gray-900 text-lg leading-tight tracking-tight">AJARK</div>
-            <div className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">POS System</div>
-          </div>
-          <button onClick={onClose} className="ml-auto text-gray-400 hover:text-gray-600 lg:hidden">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex items-center gap-4 ps-0 py-4 border-b border-white/5">
+
+          <img src="/logo.png" alt="Logo" className="w-100 object-fill rounded-xl" />
+
+          <button onClick={onClose} className="ml-auto text-gray-500 hover:text-brand-secondary lg:hidden">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
           {filteredNav.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200
+                `flex items-center gap-4 px-5 py-3.5 rounded-xl text-[14px] font-medium tracking-normal transition-all duration-200 group
                 ${isActive
-                  ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-brand-primary/10 text-brand-primary'
+                  : 'text-brand-secondary hover:bg-white-[0.02] hover:text-white'
                 }`
               }
             >
-              {item.icon}
+              <div className={`transition-colors duration-200`}>
+                {item.icon}
+              </div>
               {item.label}
+              {/* Active Indicator Bar */}
+              <div className="ml-auto opacity-0 group-[.active]:opacity-100 transition-opacity">
+                <div className="w-1 h-5 rounded-full bg-brand-primary shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+              </div>
             </NavLink>
           ))}
         </nav>
 
         {/* User info */}
-        <div className="px-4 py-6 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gray-50/50 border border-transparent hover:border-gray-200 transition-all cursor-pointer">
-            <div className={`w-9 h-9 rounded-full ${getAvatarColor(user?.name)} flex items-center justify-center text-white text-xs font-bold shadow-sm`}>
+        <div className="p-6 border-t border-white-[0.05] bg-black/10">
+          <div className="flex items-center gap-4 px-4 py-4 rounded-2xl bg-dark-800  hover:border-white-[0.1] hover:bg-dark-700 transition-all cursor-pointer group">
+            <div className={`w-10 h-10 rounded-xl ${getAvatarColor(user?.name)} flex items-center justify-center text-white text-xs font-bold shadow-lg`}>
               {getInitials(user?.name)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-gray-900 text-xs font-bold truncate leading-none mb-1">{user?.name}</p>
-              <p className="text-gray-400 text-[10px] font-bold truncate uppercase tracking-tighter">{user?.role}</p>
+              <p className="text-white text-sm font-semibold truncate leading-tight">{user?.name}</p>
+              <p className="text-brand-secondary text-[11px] font-medium truncate uppercase tracking-wider mt-0.5">{user?.role}</p>
             </div>
             <button
               onClick={handleLogout}
               title="Logout"
-              className="text-gray-300 hover:text-rose-500 transition-colors"
+              className="p-2 text-brand-secondary hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
