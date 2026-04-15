@@ -18,7 +18,10 @@ export default function Tables() {
   const fetchTables = useCallback(async () => {
     try {
       const res = await api.get('/tables');
-      setTables(res.data);
+      const sorted = res.data.sort((a, b) => 
+        a.number.localeCompare(b.number, undefined, { numeric: true, sensitivity: 'base' })
+      );
+      setTables(sorted);
     } catch (err) {
       addToast(err.message, 'error');
     } finally {
