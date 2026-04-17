@@ -66,6 +66,18 @@ const navItems = [
     ),
     adminOnly: true,
   },
+  {
+    path: '/reports',
+    label: 'Reports',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    adminOnly: true,
+    strictlyAdmin: true,
+  },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -77,7 +89,12 @@ export default function Sidebar({ isOpen, onClose }) {
     navigate('/login');
   };
 
-  const filteredNav = navItems.filter((item) => !item.adminOnly || user?.role === 'admin' || user?.role === 'manager');
+  const filteredNav = navItems.filter((item) => {
+    if (!item.adminOnly) return true;
+    if (user?.role === 'admin') return true;
+    if (item.strictlyAdmin) return false;
+    return user?.role === 'manager';
+  });
 
   return (
     <>
@@ -102,12 +119,12 @@ export default function Sidebar({ isOpen, onClose }) {
         <div className="flex items-center gap-4 ps-0 py-4 border-b border-white/5">
 
           <img src="/logo.png" alt="Logo" className="w-100 object-fill rounded-xl" />
-
+          {/* 
           <button onClick={onClose} className="ml-auto text-gray-500 hover:text-brand-secondary lg:hidden">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </button> */}
         </div>
 
         {/* Navigation */}

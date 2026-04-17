@@ -12,6 +12,7 @@ import MenuManager from './pages/MenuManager';
 import Orders from './pages/Orders';
 import OrderPortal from './pages/OrderPortal';
 import Kitchens from './pages/Kitchens';
+import Reports from './pages/Reports';
 import PrivateRoute from './components/common/PrivateRoute';
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
                 <Route path="orders" element={<Orders />} />
                 <Route path="users" element={<Users />} />
                 <Route path="kitchens" element={<Kitchens />} />
+                <Route path="reports" element={<Reports />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

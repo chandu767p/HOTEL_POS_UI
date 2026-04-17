@@ -17,10 +17,10 @@ export default function Dashboard() {
 
   const fetchDashboardStats = async () => {
     try {
-      const [ordersRes, tablesRes, menuRes] = await Promise.all([
+      const [ordersRes, tablesRes, bestSellersRes] = await Promise.all([
         api.get('/orders'),
         api.get('/tables'),
-        api.get('/menu'),
+        api.get('/orders/best-sellers?limit=4'),
       ]);
 
       const allOrders = ordersRes.data;
@@ -37,7 +37,7 @@ export default function Dashboard() {
         occupiedTables,
         totalTables,
         avgOrderVal,
-        popularItems: menuRes.data.items.slice(0, 4),
+        popularItems: bestSellersRes.data,
         recentOrders: allOrders.slice(0, 5),
       });
     } catch (err) {
@@ -128,9 +128,9 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-800 font-bold text-sm">{item.name}</p>
-                  <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider">{item.category?.name || 'Uncategorized'}</p>
+                  <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider">{item.totalSold} units sold</p>
                 </div>
-                <p className="text-rose-600 font-black text-sm">${item.price.toFixed(2)}</p>
+                <p className="text-rose-600 font-black text-sm">${item.revenue?.toFixed(2) || '0.00'}</p>
               </div>
             ))}
             {stats.popularItems.length === 0 && (

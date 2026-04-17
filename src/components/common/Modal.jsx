@@ -16,7 +16,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
 
   if (!isOpen) return null;
 
-  const widths = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' };
+  const widths = { sm: 'max-w-[80vw]', md: 'max-w-[80vw]', lg: 'max-w-[80vw]', xl: 'max-w-[80vw]' };
 
   return ReactDOM.createPortal(
     <div
