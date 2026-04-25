@@ -171,206 +171,160 @@ export default function MenuManager() {
     : items.filter(i => i.category?._id === selectedCategoryId);
 
   if (loading) return (
-    <div className="flex items-center justify-center p-32">
-      <div className="w-12 h-12 border-4 border-slate-200 border-t-brand-primary rounded-full animate-spin"></div>
+    <div className="flex items-center justify-center p-32 bg-background min-h-[60vh]">
+      <LoadingSpinner />
     </div>
   );
 
   return (
-    <div className="max-w-[1600px] mx-auto py-2">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-6 mb-12">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Menu Tools</h1>
-          <p className="text-slate-400 text-sm mt-3 font-semibold uppercase tracking-wider">{items.length} items across {categories.length} categories</p>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Menu Management</h1>
+          <p className="text-text-muted text-xs mt-1">{items.length} items in registry</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={openAddCat} className="bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2.5 rounded-xl text-[11px] uppercase tracking-widest font-black transition-all">
+          <button onClick={openAddCat} className="btn-secondary px-4 py-2 text-[11px] font-bold uppercase tracking-wider">
             + Category
           </button>
-          <button onClick={openAddItem} className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl text-[11px] uppercase tracking-widest font-black transition-all shadow-lg shadow-slate-200">
+          <button onClick={openAddItem} className="btn-primary px-4 py-2 text-[11px] font-bold uppercase tracking-wider">
             + Item
           </button>
-          <button onClick={openAddCombo} className="bg-blue-600 text-white hover:bg-blue-700 px-5 py-2.5 rounded-xl text-[11px] uppercase tracking-widest font-black transition-all shadow-lg shadow-blue-200 flex items-center gap-2">
-            <span>⚡</span> Combo
+          <button onClick={openAddCombo} className="bg-brand-info/10 text-brand-info border border-brand-info/20 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-brand-info/20">
+            + Combo
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8 items-start">
         {/* Categories Sidebar */}
-        <div className="space-y-6">
-          <div>
-            <label className="form-label mb-4 block">Categories</label>
-            <div className="space-y-1.5">
+        <div className="card p-2 space-y-1">
+          <p className="px-3 py-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Categories</p>
+          <button
+            onClick={() => setSelectedCategoryId('all')}
+            className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-none
+                ${selectedCategoryId === 'all'
+                ? 'bg-brand-primary text-white'
+                : 'text-text-muted hover:bg-background hover:text-text-primary'}`}
+          >
+            <div className="flex items-center justify-between">
+              <span>All Items</span>
+              <span className="text-[11px] opacity-70">{items.length}</span>
+            </div>
+          </button>
+
+          {categories.map(cat => (
+            <div key={cat._id} className="group relative">
               <button
-                onClick={() => setSelectedCategoryId('all')}
-                className={`w-full text-left px-5 py-4 rounded-xl text-[13px] font-bold tracking-tight transition-all
-                    ${selectedCategoryId === 'all'
-                    ? 'bg-brand-primary text-white shadow-xl shadow-brand-primary/20'
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/50'}`}
+                onClick={() => setSelectedCategoryId(cat._id)}
+                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-none pr-16
+                    ${selectedCategoryId === cat._id
+                    ? 'bg-surface text-text-primary border border-border shadow-subtle'
+                    : 'text-text-muted hover:bg-background hover:text-text-primary'}`}
               >
                 <div className="flex items-center justify-between">
-                  <span>All Items</span>
-                  <span className={`text-[11px] font-black ${selectedCategoryId === 'all' ? 'text-white/60' : 'text-slate-300'}`}>{items.length}</span>
+                  <span className="truncate">{cat.name}</span>
+                  <span className="text-[11px] opacity-70">{items.filter(i => i.category?._id === cat._id).length}</span>
                 </div>
               </button>
-
-              {categories.map(cat => (
-                <div key={cat._id} className="group relative">
-                  <button
-                    onClick={() => setSelectedCategoryId(cat._id)}
-                    className={`w-full text-left px-4 py-3.5 rounded-xl text-[12px] font-bold tracking-tight transition-all pr-20
-                        ${selectedCategoryId === cat._id
-                        ? 'bg-slate-900 text-white shadow-xl shadow-slate-200'
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-100'}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="truncate">{cat.name}</span>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${selectedCategoryId === cat._id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                        {items.filter(i => i.category?._id === cat._id).length}
-                      </span>
-                    </div>
-                  </button>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); openEditCat(cat); }}
-                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteCat(cat); }}
-                      className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1  transition-none">
+                <button
+                  onClick={(e) => { e.stopPropagation(); openEditCat(cat); }}
+                  className="p-1 rounded hover:bg-background text-text-muted hover:text-text-primary"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDeleteCat(cat); }}
+                  className="p-1 rounded hover:bg-brand-danger/10 text-text-muted hover:text-brand-danger"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
 
         {/* Master Registry Grid */}
         <div>
           {displayedItems.length === 0 ? (
-            <div className="py-40 text-center bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[2.5rem]">
-              <div className="w-20 h-20 rounded-3xl bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              </div>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-[11px]">No items in this category</p>
+            <div className="py-32 text-center border-2 border-dashed border-border rounded-2xl">
+              <p className="text-text-muted font-semibold uppercase tracking-widest text-xs">Category is empty</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {displayedItems.map(item => (
                 <div
                   key={item._id}
-                  className={`relative group bg-white border border-slate-100 rounded-3xl p-5 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300
-                    ${item.isAvailable === false ? 'opacity-40 grayscale' : ''}`}
+                  className={`card p-5 group transition-none ${item.isAvailable === false ? 'opacity-50 grayscale' : ''}`}
                 >
-                  <div className="flex gap-5">
-                    {/* Visual Indicator Layer */}
-                    <div className="relative">
-                      <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-800 font-black text-xl group-hover:bg-slate-900 group-hover:text-white transition-all duration-300">
+                  <div className="flex gap-4">
+                    <div className="relative flex-shrink-0">
+                      <div className="w-14 h-14 bg-background border border-border rounded-lg flex items-center justify-center text-text-muted font-bold text-lg group-hover:text-brand-primary group-hover:border-brand-primary transition-none">
                         {item.name.charAt(0).toUpperCase()}
                       </div>
-                      
-                      {/* Dietary Tag - Floating mini */}
+                      {/* Dietary */}
                       <div className="absolute -top-1 -right-1">
-                        {item.dietary === 'veg' && (
-                          <div className="w-5 h-5 bg-white border border-emerald-500 p-[2px] rounded-md shadow-sm">
-                             <div className="w-full h-full bg-emerald-500 rounded-full"></div>
-                          </div>
-                        )}
-                        {item.dietary === 'non-veg' && (
-                          <div className="w-5 h-5 bg-white border border-rose-500 p-[2px] rounded-md shadow-sm">
-                             <div className="w-full h-full bg-rose-500 rounded-full"></div>
-                          </div>
-                        )}
-                        {item.dietary === 'egg' && (
-                          <div className="w-5 h-5 bg-white border border-amber-500 p-[2px] rounded-md shadow-sm">
-                             <div className="w-full h-full bg-amber-500 rounded-full"></div>
-                          </div>
-                        )}
+                        {item.dietary === 'veg' && <div className="w-4 h-4 bg-background border border-brand-success p-[2px] rounded-sm"><div className="w-full h-full bg-brand-success rounded-full"></div></div>}
+                        {item.dietary === 'non-veg' && <div className="w-4 h-4 bg-background border border-brand-danger p-[2px] rounded-sm"><div className="w-full h-full bg-brand-danger rounded-full"></div></div>}
+                        {item.dietary === 'egg' && <div className="w-4 h-4 bg-background border border-brand-warning p-[2px] rounded-sm"><div className="w-full h-full bg-brand-warning rounded-full"></div></div>}
                       </div>
                     </div>
 
-                    {/* Content Layer */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start gap-3 mb-1">
-                          <h3 className="text-slate-900 font-black text-[15px] tracking-tight truncate group-hover:text-blue-600 transition-colors uppercase">
-                            {item.name}
-                          </h3>
-                          <span className="text-slate-900 font-black text-lg tracking-tighter">${item.price.toFixed(2)}</span>
-                        </div>
-                        <p className="text-slate-400 text-[11px] font-bold leading-tight line-clamp-1 mb-3">
-                          {item.description || 'Premium menu item crafted with fresh ingredients.'}
-                        </p>
-                        
-                        {/* Meta Tags */}
-                        <div className="flex flex-wrap items-center gap-2 mb-3">
-                          <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-slate-50 text-slate-400 border border-slate-100 rounded-md">
-                            {item.category?.name}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="text-text-primary font-bold text-sm truncate uppercase tracking-tight group-hover:text-brand-primary transition-none">
+                          {item.name}
+                        </h3>
+                        <span className="text-text-primary font-bold text-base tracking-tight">${item.price.toFixed(2)}</span>
+                      </div>
+                      <p className="text-text-muted text-[11px] font-medium leading-normal line-clamp-1 mt-0.5">
+                        {item.description || 'No description provided.'}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 bg-background text-text-muted border border-border rounded">
+                          {item.category?.name}
+                        </span>
+                        {item.isBundle && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 bg-brand-info/10 text-brand-info border border-brand-info/20 rounded">
+                            Combo
                           </span>
-                          {item.isBundle && (
-                             <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-md">
-                               Combo • {item.bundleItems?.length || 0} Parts
-                             </span>
-                          )}
-                          {item.kitchen && (() => {
-                            const k = kitchens.find(k => k._id === (item.kitchen?._id || item.kitchen));
-                            return k ? (
-                              <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 border border-slate-100 text-white rounded-md shadow-sm" style={{ backgroundColor: k.displayColor }}>
-                                {k.name}
-                              </span>
-                            ) : null;
-                          })()}
-                        </div>
+                        )}
+                        {item.kitchen && (() => {
+                          const k = kitchens.find(k => k._id === (item.kitchen?._id || item.kitchen));
+                          return k ? (
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border border-border text-text-muted rounded" style={{ borderColor: k.displayColor + '40' }}>
+                              {k.name}
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
 
-                      {/* Expanded Info for Combos */}
-                      {item.isBundle && item.bundleItems?.length > 0 && (
-                        <div className="mb-4 bg-slate-50/50 rounded-2xl p-3 border border-slate-100 border-dashed">
-                           <div className="flex flex-wrap gap-x-3 gap-y-1">
-                              {item.bundleItems.map((bi, idx) => (
-                                <div key={idx} className="flex items-center gap-1.5">
-                                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400/50"></div>
-                                   <span className="text-[10px] font-bold text-slate-500">{bi.item?.name} <span className="text-slate-300">x{bi.quantity}</span></span>
-                                </div>
-                              ))}
-                           </div>
-                        </div>
-                      )}
-
-                      {/* Actions Layer */}
-                      <div className="flex items-center justify-between mt-auto">
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/30">
                         <button
                           onClick={() => handleToggleAvailable(item)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition-none
                             ${item.isAvailable !== false
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-500 hover:text-white'
-                              : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-200 hover:text-slate-600'}`}
+                              ? 'text-brand-success bg-brand-success/5 border border-brand-success/10 hover:bg-brand-success/10'
+                              : 'text-text-muted bg-border/20 border border-border/30 hover:bg-border/30'}`}
                         >
-                          <div className={`w-1 h-1 rounded-full ${item.isAvailable !== false ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
-                          {item.isAvailable !== false ? 'Active' : 'Hidden'}
+                          {item.isAvailable !== false ? 'Available' : 'Sold Out'}
                         </button>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <button
                             onClick={() => openEditItem(item)}
-                            className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-900 border border-slate-100 hover:border-slate-300 transition-all"
+                            className="p-1.5 rounded bg-background text-text-muted hover:text-text-primary border border-border transition-none"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                           </button>
                           <button
                             onClick={() => handleDeleteItem(item)}
-                            className="p-2 rounded-xl bg-rose-50 text-rose-300 hover:text-rose-600 border border-rose-50 hover:border-rose-100 transition-all"
+                            className="p-1.5 rounded bg-brand-danger/5 text-brand-danger/60 hover:text-brand-danger border border-brand-danger/10 transition-none"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                           </button>
                         </div>
                       </div>
@@ -384,50 +338,50 @@ export default function MenuManager() {
       </div>
 
       {/* Category Modal */}
-      <Modal isOpen={catModal.open} onClose={() => setCatModal({ open: false, editing: null })} title={catModal.editing ? 'Edit Category' : 'Add Category'}>
-        <form onSubmit={handleSaveCat} className="space-y-8 pt-4">
-          <div className="space-y-2">
-            <label className="form-label">Category Name *</label>
+      <Modal isOpen={catModal.open} onClose={() => setCatModal({ open: false, editing: null })} title={catModal.editing ? 'Edit Category' : 'New Category'}>
+        <form onSubmit={handleSaveCat} className="space-y-6 pt-2">
+          <div className="space-y-1.5">
+            <label className="form-label">Category Name</label>
             <input
               className="form-input"
               value={catForm.name}
               onChange={e => setCatForm(p => ({ ...p, name: e.target.value }))}
-              placeholder="e.g. Mains"
+              placeholder="e.g. Appetizers"
               required
             />
           </div>
-          <div className="space-y-2">
-            <label className="form-label">Description (optional)</label>
+          <div className="space-y-1.5">
+            <label className="form-label">Description</label>
             <textarea
-              className="form-input min-h-[100px] py-4"
+              className="form-input min-h-[100px]"
               value={catForm.description}
               onChange={e => setCatForm(p => ({ ...p, description: e.target.value }))}
-              placeholder="Description..."
+              placeholder="Summary..."
             />
           </div>
-          <button disabled={submitting} type="submit" className="btn-primary w-full py-5 text-[12px] uppercase tracking-[0.2em]">
-            {submitting ? 'Saving...' : catModal.editing ? 'Save Category' : 'Add Category'}
+          <button disabled={submitting} type="submit" className="btn-primary w-full py-3 text-xs uppercase tracking-widest">
+            {submitting ? 'Processing...' : 'Save Category'}
           </button>
         </form>
       </Modal>
 
       {/* Item Modal */}
-      <Modal isOpen={itemModal.open} onClose={() => setItemModal({ open: false, editing: null })} title={itemModal.editing ? 'Edit Item' : 'Add Item'} size="md">
-        <form onSubmit={handleSaveItem} className="space-y-8 pt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div className="sm:col-span-2 space-y-2">
-              <label className="form-label">Item Name *</label>
+      <Modal isOpen={itemModal.open} onClose={() => setItemModal({ open: false, editing: null })} title={itemModal.editing ? 'Edit Item' : 'New Item'} size="md">
+        <form onSubmit={handleSaveItem} className="space-y-6 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2 space-y-1.5">
+              <label className="form-label">Item Name</label>
               <input
                 className="form-input"
                 value={itemForm.name}
                 onChange={e => setItemForm(p => ({ ...p, name: e.target.value }))}
-                placeholder="e.g. Hamburger"
+                placeholder="Product title"
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="form-label">Price ($) *</label>
+            <div className="space-y-1.5">
+              <label className="form-label">Price ($)</label>
               <input
                 type="number"
                 step="0.01"
@@ -440,22 +394,22 @@ export default function MenuManager() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="form-label">Category *</label>
+            <div className="space-y-1.5">
+              <label className="form-label">Category</label>
               <select
                 className="form-input"
                 value={itemForm.category}
                 onChange={e => setItemForm(p => ({ ...p, category: e.target.value }))}
                 required
               >
-                <option value="">Select Category</option>
+                <option value="">Select</option>
                 {categories.map(cat => (
                   <option key={cat._id} value={cat._id}>{cat.name}</option>
                 ))}
               </select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="form-label">Kitchen Station</label>
               <select
                 className="form-input"
@@ -469,59 +423,39 @@ export default function MenuManager() {
               </select>
             </div>
 
-            <div className="space-y-2 flex flex-col justify-end">
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl h-[58px]">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Available to Order</span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={itemForm.isAvailable}
-                    onChange={e => setItemForm(p => ({ ...p, isAvailable: e.target.checked }))}
-                    className="sr-only peer"
-                  />
-                  <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-400 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:bg-white peer-checked:bg-emerald-500"></div>
-                </label>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 ml-1">Dietary Type</label>
+            <div className="space-y-1.5">
+              <label className="form-label">Dietary Type</label>
               <div className="grid grid-cols-4 gap-2">
                 {['none', 'veg', 'non-veg', 'egg'].map(type => (
                   <button
                     key={type}
                     type="button"
                     onClick={() => setItemForm(p => ({ ...p, dietary: type }))}
-                    className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all
-                      ${itemForm.dietary === type 
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200' 
-                        : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'}`}
+                    className={`py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-none
+                      ${itemForm.dietary === type
+                        ? 'bg-brand-primary text-white border-brand-primary'
+                        : 'bg-surface text-text-muted border-border'}`}
                   >
-                    {type === 'none' ? 'General' : type}
+                    {type === 'none' ? 'Gen' : type}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-2 flex flex-col justify-end">
-              <div className="flex items-center justify-between p-4 bg-blue-50/50 border border-blue-100 rounded-xl h-[58px]">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-500">Is this a Combo?</span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={itemForm.isBundle}
-                    onChange={e => setItemForm(p => ({ ...p, isBundle: e.target.checked }))}
-                    className="sr-only peer"
-                  />
-                  <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-400 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:bg-white peer-checked:bg-blue-500"></div>
-                </label>
-              </div>
+            <div className="sm:col-span-2 flex items-center justify-between p-3 bg-surface border border-border rounded-lg">
+              <span className="text-xs font-bold uppercase tracking-wider text-text-muted">Is Bundle / Combo?</span>
+              <input
+                type="checkbox"
+                checked={itemForm.isBundle}
+                onChange={e => setItemForm(p => ({ ...p, isBundle: e.target.checked }))}
+                className="w-4 h-4 bg-background border-border rounded focus:ring-brand-primary"
+              />
             </div>
 
             {itemForm.isBundle && (
-              <div className="sm:col-span-2 p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+              <div className="sm:col-span-2 p-4 bg-background border border-border rounded-lg space-y-3">
                 <label className="form-label">Combo Components</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[160px] overflow-y-auto pr-1">
                   {items.filter(i => !i.isBundle && i._id !== itemModal.editing?._id).map(i => {
                     const isSelected = itemForm.bundleItems.some(bi => bi.item === i._id);
                     return (
@@ -535,26 +469,11 @@ export default function MenuManager() {
                             setItemForm(p => ({ ...p, bundleItems: [...p.bundleItems, { item: i._id, quantity: 1 }] }));
                           }
                         }}
-                        className={`flex items-center justify-between p-3 rounded-xl border text-sm font-bold transition-all
-                          ${isSelected ? 'bg-white border-brand-primary text-brand-primary shadow-sm' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'}`}
+                        className={`flex items-center justify-between px-3 py-2 rounded border text-xs font-semibold transition-none
+                          ${isSelected ? 'bg-surface border-brand-primary text-brand-primary' : 'bg-surface border-border text-text-muted'}`}
                       >
                         <span className="truncate flex-1 text-left">{i.name}</span>
-                        {isSelected && (
-                          <div className="flex items-center gap-2 ml-2">
-                            <input
-                              type="number"
-                              min="1"
-                              className="w-10 h-6 bg-slate-100 border-0 rounded text-center text-[10px]"
-                              value={itemForm.bundleItems.find(bi => bi.item === i._id)?.quantity || 1}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value) || 1;
-                                setItemForm(p => ({ ...p, bundleItems: p.bundleItems.map(bi => bi.item === i._id ? { ...bi, quantity: val } : bi) }));
-                              }}
-                            />
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                        )}
+                        {isSelected && <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                       </button>
                     );
                   })}
@@ -562,19 +481,19 @@ export default function MenuManager() {
               </div>
             )}
 
-            <div className="sm:col-span-2 space-y-2">
+            <div className="sm:col-span-2 space-y-1.5">
               <label className="form-label">Description</label>
               <textarea
-                className="form-input min-h-[120px] py-4"
+                className="form-input min-h-[100px]"
                 value={itemForm.description}
                 onChange={e => setItemForm(p => ({ ...p, description: e.target.value }))}
-                placeholder="Item details..."
+                placeholder="Product description..."
               />
             </div>
           </div>
 
-          <button disabled={submitting} type="submit" className="btn-primary w-full py-5 text-[12px] uppercase tracking-[0.2em]">
-            {submitting ? 'Saving...' : itemModal.editing ? 'Save Item' : 'Add Item'}
+          <button disabled={submitting} type="submit" className="btn-primary w-full py-3 text-xs uppercase tracking-widest">
+            {submitting ? 'Saving...' : 'Save Product'}
           </button>
         </form>
       </Modal>

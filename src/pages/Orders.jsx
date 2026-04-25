@@ -4,14 +4,33 @@ import { useToast } from '../context/ToastContext';
 import Modal from '../components/common/Modal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
-const KITCHEN_STATUS_COLORS = {
-  pending: 'bg-amber-50 text-amber-600 border-amber-100',
-  preparing: 'bg-blue-50 text-blue-600 border-blue-100',
-  ready: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-  completed: 'bg-slate-50 text-slate-400 border-slate-100',
+const KITCHEN_STATUS_CLASSES = {
+  pending: 'status-orange',
+  preparing: 'status-blue',
+  ready: 'status-green',
+  completed: 'bg-border/50 text-text-muted',
+};
+
+const ORDER_STATUS_CLASSES = {
+  pending: 'status-orange',
+  preparing: 'status-blue',
+  ready: 'status-blue',
+  served: 'status-purple',
+  paid: 'status-green',
+  cancelled: 'status-red',
 };
 
 const STATUS_FLOW = ['pending', 'preparing', 'served'];
+
+const loadRazorpay = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 function BillingModal({ order, onClose, onPaid, onStatusUpdate, onCancelled }) {
   const [discount, setDiscount] = useState(0);
@@ -45,7 +64,7 @@ function BillingModal({ order, onClose, onPaid, onStatusUpdate, onCancelled }) {
     setStatusUpdating(true);
     try {
       const res = await api.put(`/orders/${order._id}/status`, { status: nextStatus });
-      addToast(`Status → ${nextStatus}`, 'success');
+      addToast(`Status: ${nextStatus}`, 'success');
       onStatusUpdate(res.data);
     } catch (err) {
       addToast(err.message, 'error');
@@ -55,12 +74,46 @@ function BillingModal({ order, onClose, onPaid, onStatusUpdate, onCancelled }) {
   };
 
   const handlePay = async () => {
-    if (!paymentMethod) return addToast('Select a payment method', 'warning');
+    if (!paymentMethod) return addToast('Select payment method', 'warning');
     setSubmitting(true);
     try {
-      await api.post(`/orders/${order._id}/pay`, { paymentMethod, discount, tax: taxRate });
-      addToast('Payment received! Table is now available.', 'success');
-      onPaid();
+      if (paymentMethod === 'online') {
+        const res = await loadRazorpay();
+        if (!res) return addToast('Razorpay SDK failed to load. Are you online?', 'error');
+
+        // Create order on backend
+        const { data: { rzpOrder } } = await api.post(`/orders/${order._id}/razorpay-order`);
+
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_your_key',
+          amount: rzpOrder.amount,
+          currency: rzpOrder.currency,
+          name: "AJARK POS",
+          description: `Order #${order._id.slice(-6).toUpperCase()}`,
+          order_id: rzpOrder.id,
+          handler: async (response) => {
+            try {
+              await api.post(`/orders/${order._id}/razorpay-verify`, response);
+              addToast('Payment successful!', 'success');
+              onPaid();
+            } catch (err) {
+              addToast(err.message || 'Payment verification failed', 'error');
+            }
+          },
+          prefill: {
+            name: order.waiter?.name || 'Customer',
+            email: "pos@edensoft.com",
+          },
+          theme: { color: "#3B82F6" },
+        };
+
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.open();
+      } else {
+        await api.post(`/orders/${order._id}/pay`, { paymentMethod, discount, tax: taxRate });
+        addToast('Payment settled', 'success');
+        onPaid();
+      }
     } catch (err) {
       addToast(err.message, 'error');
     } finally {
@@ -72,7 +125,7 @@ function BillingModal({ order, onClose, onPaid, onStatusUpdate, onCancelled }) {
     setCancelling(true);
     try {
       const res = await api.put(`/orders/${order._id}/status`, { status: 'cancelled' });
-      addToast('Order cancelled successfully.', 'success');
+      addToast('Order cancelled', 'success');
       onCancelled(res.data);
     } catch (err) {
       addToast(err.message, 'error');
@@ -82,149 +135,113 @@ function BillingModal({ order, onClose, onPaid, onStatusUpdate, onCancelled }) {
     }
   };
 
-  const statusColors = {
-    pending: 'bg-blue-50 text-blue-700 border-blue-100',
-    preparing: 'bg-amber-50 text-amber-700 border-amber-100',
-    ready: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    served: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    paid: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    cancelled: 'bg-rose-50 text-rose-700 border-rose-100'
-  };
-
   return (
     <div className="space-y-6">
-      {/* Header */}
-
-      <p className="text-[20px] font-bold text-gray-900 tracking-wider">
-        Items
-      </p>
-
-
       {/* Items */}
-      <div className="space-y-3 max-h-56 overflow-y-auto pr-2">
+      <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
         {order.items.map((item, i) => (
-          <div key={i} className="flex justify-between items-start py-2 border-b border-gray-100 last:border-0 group">
+          <div key={i} className="flex justify-between items-center py-2.5 border-b border-border/30 last:border-0">
             <div className="flex-1 min-w-0">
-              <p className="text-gray-800 font-bold text-sm group-hover:text-blue-600 transition-colors truncate">{item.name}</p>
-              <p className="text-gray-400 text-[11px] font-semibold mt-0.5">×{item.quantity} · ${item.price.toFixed(2)} ea</p>
+              <p className="text-text-primary font-semibold text-sm truncate uppercase tracking-tight">{item.name}</p>
+              <p className="text-text-muted text-[11px] font-medium uppercase mt-0.5">{item.quantity} × ${item.price.toFixed(2)}</p>
             </div>
-            <p className="text-gray-800 font-black text-sm ml-4">${(item.price * item.quantity).toFixed(2)}</p>
+            <p className="text-text-primary font-bold text-sm ml-4 tracking-tight">${(item.price * item.quantity).toFixed(2)}</p>
           </div>
         ))}
       </div>
 
       {/* Bill breakdown */}
-      <div className="bg-gray-50 border border-gray-100 rounded-xl p-6 space-y-3">
-        <div className="flex justify-between text-[11px] font-bold uppercase text-gray-500">
+      <div className="bg-background border border-border rounded-xl p-5 space-y-3.5">
+        <div className="flex justify-between text-xs font-medium text-text-muted">
           <span>Subtotal</span>
-          <span className="text-gray-800">${subtotal.toFixed(2)}</span>
+          <span className="text-text-secondary">${subtotal.toFixed(2)}</span>
         </div>
 
         {order.status !== 'paid' && (
           <div className="flex items-center justify-between gap-4">
-            <span className="text-[11px] font-bold uppercase text-gray-500">Discount (%)</span>
+            <span className="text-xs font-medium text-text-muted">Discount (%)</span>
             <input
               type="number" min="0" max="100"
               value={discount}
               onChange={e => setDiscount(Math.max(0, Math.min(100, Number(e.target.value))))}
-              className="w-24 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-black text-right text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-20 bg-surface border border-border rounded-md px-2 py-1 text-xs font-bold text-right text-brand-primary focus:outline-none focus:border-brand-primary"
             />
           </div>
         )}
 
-        {discount > 0 && (
-          <div className="flex justify-between text-[11px] font-bold uppercase text-rose-500">
-            <span>Discount Applied</span>
-            <span>-${discountAmt.toFixed(2)}</span>
-          </div>
-        )}
-
-        <div className="flex justify-between text-[11px] font-bold uppercase text-gray-500">
+        <div className="flex justify-between text-xs font-medium text-text-muted">
           <span>Tax ({taxRate}%)</span>
-          <span className="text-gray-800">+${taxAmt.toFixed(2)}</span>
+          <span className="text-text-secondary">+${taxAmt.toFixed(2)}</span>
         </div>
 
-        <div className="flex justify-between pt-4 border-t border-gray-200">
-          <span className="text-gray-500 text-xs font-bold uppercase">Grand Total</span>
-          <span className="text-gray-900 font-black text-2xl">${total.toFixed(2)}</span>
+        <div className="flex justify-between pt-4 border-t border-border">
+          <span className="text-text-primary font-semibold text-sm">Grand Total</span>
+          <span className="text-text-primary font-bold text-2xl tracking-tighter">${total.toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Status update */}
-      {order.status !== 'paid' && order.status !== 'cancelled' && nextStatus && (
-        <button
-          onClick={handleStatusUpdate}
-          disabled={statusUpdating}
-          className="w-full bg-white border-2 border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold py-3 rounded-xl transition-all text-xs uppercase tracking-wider disabled:opacity-50"
-        >
-          {statusUpdating ? 'Updating...' : `Mark as ${nextStatus} →`}
-        </button>
-      )}
-
-      {/* Payment */}
+      {/* Action Area */}
       {order.status !== 'paid' && order.status !== 'cancelled' && (
-        <div className="space-y-5">
+        <div className="space-y-4">
+          {nextStatus && (
+            <button
+              onClick={handleStatusUpdate}
+              disabled={statusUpdating}
+              className="w-full btn-secondary py-3 text-xs uppercase tracking-wider"
+            >
+              {statusUpdating ? 'Updating...' : `Advance to ${nextStatus}`}
+            </button>
+          )}
+
           {isKitchenBusy && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>
-                    <p className="text-amber-700 font-bold text-[10px] uppercase tracking-wider">Kitchen Still Busy</p>
+            <div className="bg-brand-warning/5 border border-brand-warning/20 rounded-lg p-3.5">
+              <p className="text-brand-warning font-bold text-[11px] uppercase tracking-wide mb-2 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-warning"></span>
+                Kitchen Working
+              </p>
+              <div className="space-y-1.5">
+                {busyKitchens.map((ko, i) => (
+                  <div key={i} className="flex items-center justify-between text-[11px]">
+                    <span className="text-text-muted">{ko.kitchen?.name || 'Kitchen'}</span>
+                    <span className={`font-bold uppercase ${ko.status === 'pending' ? 'text-brand-warning' : 'text-brand-primary'}`}>{ko.status}</span>
                   </div>
-                  <div className="space-y-2 pl-4 border-l border-amber-200">
-                    {busyKitchens.map((ko, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ko.kitchen?.displayColor || '#f59e0b' }}></div>
-                          <span className="text-gray-700 text-xs font-medium">{ko.kitchen?.name || 'Kitchen'}</span>
-                        </div>
-                        <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-md border
-                          ${ko.status === 'pending' ? 'border-amber-200 text-amber-700 bg-amber-100' : 'border-blue-200 text-blue-700 bg-blue-100'}`}>
-                          {ko.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {!forcePayOverride ? (
-                    <button
-                      onClick={() => setForcePayOverride(true)}
-                      className="mt-3 text-[10px] font-bold text-amber-600 hover:text-amber-700 uppercase tracking-wider"
-                    >
-                      Override & Pay Anyway →
-                    </button>
-                  ) : (
-                    <p className="mt-3 text-[10px] font-bold text-amber-600 uppercase tracking-wider">Override Active — Ready to Collect</p>
-                  )}
-                </div>
+                ))}
               </div>
+              {!forcePayOverride && (
+                <button
+                  onClick={() => setForcePayOverride(true)}
+                  className="mt-3 text-[10px] font-bold text-brand-primary hover:underline uppercase tracking-tight"
+                >
+                  Override Protection →
+                </button>
+              )}
             </div>
           )}
 
           <div className="space-y-3">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Payment Method</p>
+            <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider ml-1">Settlement Method</p>
             <div className="grid grid-cols-3 gap-2">
               {['cash', 'card', 'online'].map(method => (
                 <button
                   key={method}
                   onClick={() => setPaymentMethod(method)}
                   disabled={!canPay}
-                  className={`py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-30 border
+                  className={`py-2.5 rounded-md text-[10px] font-bold uppercase tracking-wide border transition-none
                     ${paymentMethod === method
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'}`}
+                      ? 'bg-brand-primary text-white border-brand-primary'
+                      : 'bg-surface text-text-muted border-border hover:border-text-muted'}`}
                 >
                   {method === 'online' ? 'UPI' : method}
                 </button>
               ))}
             </div>
             <button
-              onClick={canPay ? handlePay : () => addToast('Kitchen is still busy. Use "Override & Pay Anyway" to proceed.', 'warning')}
-              disabled={submitting}
-              className={`w-full mt-2 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm
-                ${canPay ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'}`}
+              onClick={handlePay}
+              disabled={submitting || !canPay}
+              className={`w-full py-4 rounded-lg text-xs font-bold uppercase tracking-widest transition-none
+                ${canPay ? 'bg-brand-success text-white' : 'bg-border text-text-muted cursor-not-allowed'}`}
             >
-              {submitting ? 'Processing...' : canPay ? '✓ Collect Payment' : 'Kitchen Busy'}
+              {submitting ? 'Processing...' : 'Settle Bill'}
             </button>
           </div>
         </div>
@@ -232,43 +249,42 @@ function BillingModal({ order, onClose, onPaid, onStatusUpdate, onCancelled }) {
 
       {/* Completion Status */}
       {(order.status === 'paid' || order.status === 'cancelled') && (
-        <div className={`rounded-xl p-5 text-center border ${order.status === 'paid' ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
-          <p className={`font-bold text-xs uppercase tracking-wider ${order.status === 'paid' ? 'text-emerald-700' : 'text-rose-700'}`}>
-            Order {order.status === 'paid' ? 'Paid' : 'Cancelled'}
+        <div className={`rounded-lg p-4 text-center border ${order.status === 'paid' ? 'status-green' : 'status-red'}`}>
+          <p className="font-bold text-xs uppercase tracking-widest">
+            {order.status === 'paid' ? 'Payment Received' : 'Order Voided'}
           </p>
           {order.status === 'paid' && (
-            <p className="text-gray-500 text-xs mt-1">Paid via {order.paymentMethod?.toUpperCase()}</p>
+            <p className="text-text-muted text-[10px] mt-1 uppercase tracking-tight">Method: {order.paymentMethod}</p>
           )}
         </div>
       )}
 
-      {/* Cancel Order */}
+      {/* Cancel Action */}
       {order.status !== 'paid' && order.status !== 'cancelled' && (
         <div className="pt-2">
           {!confirmCancel ? (
             <button
               onClick={() => setConfirmCancel(true)}
-              className="w-full text-gray-400 hover:text-rose-500 text-xs font-bold uppercase tracking-wider transition-colors"
+              className="w-full text-text-muted hover:text-brand-danger text-[10px] font-bold uppercase tracking-wider"
             >
-              Cancel Order
+              Void Order
             </button>
           ) : (
-            <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 space-y-4">
-              <p className="text-rose-700 font-bold text-xs text-center uppercase">⚠ Cancel this order?</p>
-              <p className="text-gray-600 text-xs text-center">This will cancel the order and free up the table. This cannot be undone.</p>
-              <div className="flex gap-3">
+            <div className="bg-brand-danger/5 border border-brand-danger/20 rounded-lg p-4 space-y-4">
+              <p className="text-brand-danger font-bold text-[11px] text-center uppercase">Void this order?</p>
+              <div className="flex gap-2">
                 <button
                   onClick={() => setConfirmCancel(false)}
-                  className="flex-1 bg-white border border-gray-200 text-gray-600 py-2 rounded-lg text-xs font-bold hover:bg-gray-50"
+                  className="flex-1 btn-secondary py-2 text-[10px]"
                 >
-                  Go Back
+                  No
                 </button>
                 <button
                   onClick={handleCancel}
                   disabled={cancelling}
-                  className="flex-1 bg-rose-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-rose-700 disabled:opacity-50"
+                  className="flex-1 bg-brand-danger text-white py-2 rounded-md text-[10px] font-bold uppercase"
                 >
-                  {cancelling ? 'Cancelling...' : 'Cancel Order'}
+                  {cancelling ? '...' : 'Yes, Void'}
                 </button>
               </div>
             </div>
@@ -309,156 +325,118 @@ export default function Orders() {
     setSelectedOrder(updatedOrder);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'paid': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/10';
-      case 'preparing': return 'bg-amber-500/10 text-amber-400 border-amber-500/10';
-      case 'ready': return 'bg-brand-primary/10 text-brand-primary border-brand-primary/10';
-      case 'pending': return 'bg-blue-500/10 text-blue-400 border-blue-500/10';
-      case 'served': return 'bg-brand-primary/10 text-brand-primary border-brand-primary/10';
-      case 'cancelled': return 'bg-rose-500/10 text-rose-400 border-rose-500/10';
-      default: return 'bg-white/5 text-brand-secondary border-white/5';
-    }
-  };
-
   const statuses = ['all', 'pending', 'preparing', 'ready', 'served', 'paid', 'cancelled'];
   const filteredOrders = filterStatus === 'all' ? orders : orders.filter(o => o.status === filterStatus);
 
   if (loading) return (
-    <div className="flex items-center justify-center p-32">
-      <LoadingSpinner size="lg" />
+    <div className="flex items-center justify-center h-[80vh] bg-background">
+      <LoadingSpinner />
     </div>
   );
 
   return (
-    <div className="max-w-[1600px] mx-auto py-2">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-6 mb-12">
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Orders</h1>
-          <p className="text-slate-400 text-sm mt-3 font-semibold uppercase tracking-wider">Track and manage all active and completed orders</p>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Billing & Orders</h1>
+          <p className="text-text-muted text-xs mt-1">
+            {orders.filter(o => !['paid', 'cancelled'].includes(o.status)).length} active transactions
+          </p>
         </div>
-        <button onClick={fetchOrders} className="btn-secondary group p-4 border-slate-200">
-          <svg className="w-5 h-5 group-hover:rotate-180 transition-transform duration-700 text-slate-400 group-hover:text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        <button onClick={fetchOrders} className="btn-secondary p-2.5 rounded-lg group">
+          <svg className="w-4 h-4 text-text-muted group-hover:text-text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>
       </div>
 
-      {/* Status filters */}
-      <div className="flex gap-2.5 flex-wrap mb-10 pb-2 overflow-x-auto custom-scrollbar">
+      {/* Filters */}
+      <div className="flex gap-1.5 flex-wrap bg-surface p-1.5 border border-border rounded-xl">
         {statuses.map(s => (
           <button key={s} onClick={() => setFilterStatus(s)}
-            className={`px-5 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all duration-300 border
+            className={`px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-none
               ${filterStatus === s
-                ? 'bg-brand-primary text-white border-brand-primary shadow-xl shadow-brand-primary/20'
-                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 shadow-sm'}`}>
-            {s === 'all' ? `All (${orders.length})` : `${s} (${orders.filter(o => o.status === s).length})`}
+                ? 'bg-background text-text-primary border border-border shadow-subtle'
+                : 'text-text-muted hover:text-text-secondary'}`}>
+            {s} ({s === 'all' ? orders.length : orders.filter(o => o.status === s).length})
           </button>
         ))}
       </div>
 
-      <div className="card overflow-hidden border-slate-200 shadow-xl shadow-slate-200/20">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse">
+      <div className="card">
+        <div className="overflow-x-auto">
+          <table className="table-minimal">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">Order ID</th>
-                <th className="px-8 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">Table</th>
-                <th className="px-8 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">Waiter</th>
-                <th className="px-8 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">Items</th>
-                <th className="px-8 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">Total</th>
-                <th className="px-8 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">Status</th>
-                <th className="px-8 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">Time</th>
-                <th className="px-8 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] text-right">Action</th>
+              <tr>
+                <th>ID</th>
+                <th>Waiter / Table</th>
+                <th>Status</th>
+                <th>Items</th>
+                <th>Amount</th>
+                <th>Time</th>
+                <th className="text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody>
               {filteredOrders.map((order) => (
-                <tr key={order._id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-8 py-7">
-                    <span className="text-slate-300 font-mono text-[11px] font-bold transition-colors group-hover:text-brand-primary">#{order._id.slice(-8).toUpperCase()}</span>
+                <tr key={order._id}>
+                  <td>
+                    <span className="font-mono text-[11px] font-medium text-text-muted">#{order._id.slice(-6).toUpperCase()}</span>
                   </td>
-                  <td className="px-8 py-7">
-                    <span className="text-slate-900 font-black text-base tracking-tight">Table {order.table?.number || '?'}</span>
-                  </td>
-                  <td className="px-8 py-7">
-                    <span className="text-slate-500 font-bold text-xs uppercase tracking-wide">{order.waiter?.name || 'SYSTEM'}</span>
-                  </td>
-                  <td className="px-8 py-7">
-                    {order.items?.length > 0 ? (
-                      <div className="flex flex-col gap-2 max-w-[280px]">
-                        {order.items.slice(0, 2).map((item, i) => {
-                          const kitchenType = item.kitchen?.type ||
-                            order.kitchenOrders?.find(ko =>
-                              ko.items?.some(ki =>
-                                (ki.menuItem?._id || ki.menuItem)?.toString() ===
-                                (item.menuItem?._id || item.menuItem)?.toString()
-                              )
-                            )?.kitchen?.type;
-                          const isVeg = kitchenType === 'veg' || kitchenType === 'dessert';
-                          const isNonVeg = kitchenType === 'non-veg' || kitchenType === 'bar';
-                          return (
-                            <div key={i} className="flex items-center gap-2.5">
-                              <div className={`shrink-0 w-2 h-2 rounded-full border border-slate-100
-                                ${isVeg ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : isNonVeg ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.3)]' : 'bg-slate-200'}`}>
-                              </div>
-                              <span className="text-slate-600 text-[13px] font-bold truncate group-hover:text-slate-900">{item.name}</span>
-                              <span className="shrink-0 text-slate-400 text-[11px] font-black ml-auto opacity-40 group-hover:opacity-100">×{item.quantity}</span>
-                            </div>
-                          );
-                        })}
-                        {order.items.length > 2 && (
-                          <span className="text-slate-400 text-[11px] font-bold pl-5 italic opacity-60 group-hover:opacity-100 transition-opacity">
-                            + {order.items.length - 2} more items
-                          </span>
-                        )}
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded bg-background border border-border flex items-center justify-center text-[10px] font-bold text-text-muted">
+                         {order.waiter?.name?.split(' ').map(n => n[0]).join('') || 'W'}
                       </div>
-                    ) : (
-                      <span className="text-slate-300 text-[10px] font-black uppercase tracking-[0.2em] opacity-40">— No Items —</span>
-                    )}
+                      <div>
+                        <p className="text-text-secondary font-semibold text-[13px] leading-tight">{order.waiter?.name || 'Walk-in'}</p>
+                        <p className="text-text-muted text-[10px] font-medium uppercase tracking-tight">{order.table?.number ? `Table ${order.table.number}` : 'Walk-in'}</p>
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-8 py-7">
-                    <span className="text-slate-900 font-black text-xl tracking-tighter">${order.totalAmount.toFixed(2)}</span>
-                  </td>
-                  <td className="px-8 py-7">
-                    <span className={`badge border font-black ${getStatusColor(order.status)} pb-1`}>
+                  <td>
+                    <span className={`badge ${ORDER_STATUS_CLASSES[order.status]}`}>
                       {order.status}
                     </span>
                   </td>
-                  <td className="px-8 py-7">
-                    <span className="text-slate-400 font-bold text-[11px] uppercase tracking-wider">
-                      {new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).format(new Date(order.createdAt))}
+                  <td>
+                    <span className="text-text-secondary text-xs font-medium">
+                      {order.items?.length || 0} items
                     </span>
                   </td>
-                  <td className="px-8 py-7 text-right">
-                    <button
-                      onClick={() => setSelectedOrder(order)}
-                      className={`text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 px-6 py-3 rounded-xl border
-                        ${order.status === 'paid' ? 'bg-slate-50 text-slate-500 hover:text-slate-900 border-slate-100 hover:border-slate-300' : 'bg-brand-primary/5 text-brand-primary border-brand-primary/10 hover:bg-brand-primary hover:text-white shadow-sm hover:shadow-lg hover:shadow-brand-primary/20'}`}
-                    >
-                      {order.status === 'paid' ? 'View' : 'Bill'}
-                    </button>
+                  <td>
+                    <span className="text-text-primary font-bold text-sm tracking-tight">${order.totalAmount.toFixed(2)}</span>
+                  </td>
+                  <td>
+                    <span className="text-text-muted text-[11px] font-medium uppercase">
+                      {new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit' }).format(new Date(order.createdAt))}
+                    </span>
+                  </td>
+                  <td className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className={`px-4 py-2 rounded text-[10px] font-bold uppercase tracking-wider transition-none
+                          ${order.status === 'paid' ? 'btn-secondary' : 'bg-brand-success text-white hover:bg-brand-success/90'}`}
+                      >
+                        {order.status === 'paid' ? 'View' : 'Bill'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
           {filteredOrders.length === 0 && (
-            <div className="py-40 text-center bg-slate-50/30">
-              <div className="w-20 h-20 rounded-3xl bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[11px]">No orders found</p>
+            <div className="py-24 text-center">
+              <p className="text-text-muted font-medium uppercase tracking-widest text-xs">No orders match criteria</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Billing Modal Overlay */}
-      <Modal isOpen={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={`Bill — Table ${selectedOrder?.table?.number || ''}`} size="md">
+      {/* Billing Modal */}
+      <Modal isOpen={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={`Order #${selectedOrder?._id.slice(-6).toUpperCase()}`} size="md">
         <BillingModal
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
@@ -470,3 +448,4 @@ export default function Orders() {
     </div>
   );
 }
+

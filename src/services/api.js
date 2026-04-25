@@ -14,13 +14,11 @@ api.interceptors.response.use(
       error.message ||
       'An unexpected error occurred';
 
-    // Auto-logout on 401
-    if (error.response?.status === 401) {
-      localStorage.removeItem('pos_token'); // Changed from pos_token
+    // Auto-logout on 401 — but DON'T redirect if we are on the public kitchen display
+    if (error.response?.status === 401 && window.location.pathname !== '/kitchen') {
+      localStorage.removeItem('pos_token');
       delete api.defaults.headers.common['Authorization'];
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
+      window.location.href = '/login';
     }
 
     return Promise.reject(new Error(message));

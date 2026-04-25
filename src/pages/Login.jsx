@@ -30,54 +30,53 @@ export default function Login() {
 
   const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }));
 
-  return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Subtle Background Accents */}
-      <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] bg-brand-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-slate-200/50 rounded-full blur-[100px] pointer-events-none"></div>
+  const [kitchens, setKitchens] = useState([]);
 
-      <div className="card w-full max-w-lg p-12 relative z-10 animate-in fade-in zoom-in-95 duration-700 shadow-2xl shadow-brand-primary/5 border-slate-200">
-        <div className="text-center mb-12">
-          <div className="w-20 h-20 rounded-[2rem] bg-slate-50 border border-slate-100 mx-auto mb-8 flex items-center justify-center shadow-sm">
-            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+  React.useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/kitchens`)
+      .then(res => res.json())
+      .then(data => setKitchens(data.data || []))
+      .catch(err => console.error('Failed to fetch kitchens for display:', err));
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 gap-8">
+      <div className="card w-full max-w-md p-10">
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 rounded-xl bg-surface border border-border mx-auto mb-6 flex items-center justify-center">
+            <svg className="w-8 h-8 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
           </div>
-          <h1 className="text-5xl font-black tracking-tighter mb-4">
-            <span className="text-slate-900 border-b-4 border-brand-primary">Eden</span>
-            <span className="text-slate-900">Soft</span>
-            <span className="text-brand-primary ml-1 font-mono">X</span>
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary mb-2">
+            Eden<span className="text-brand-primary">Soft</span>
           </h1>
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Authentic</span>
-            <div className="w-1 h-1 rounded-full bg-slate-200"></div>
-            <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Secure</span>
-            <div className="w-1 h-1 rounded-full bg-slate-200"></div>
-            <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Optimized</span>
-          </div>
+          <p className="text-text-muted text-[11px] font-bold uppercase tracking-widest">Minimalist POS Terminal</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-2">
-            <label className="form-label">Email</label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-1.5">
+            <label className="form-label">Email Node</label>
             <input
               type="email"
               value={form.email}
               onChange={set('email')}
               required
-              placeholder="e.g. administrator@edensoft.com"
-              className="form-input py-4 text-base"
+              placeholder="operator@edensoft.com"
+              className="form-input"
               autoComplete="email"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="form-label">Password</label>
+          <div className="space-y-1.5">
+            <label className="form-label">Access Token</label>
             <input
               type="password"
               value={form.password}
               onChange={set('password')}
               required
               placeholder="••••••••"
-              className="form-input py-4 text-base"
+              className="form-input"
               autoComplete="current-password"
             />
           </div>
@@ -85,25 +84,45 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full py-5 text-[12px] uppercase tracking-[0.3em] mt-4"
+            className="btn-primary w-full py-3 text-xs uppercase tracking-[0.2em] mt-2"
           >
-            {loading ? (
-              <div className="flex items-center justify-center gap-4">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span>Signing in...</span>
-              </div>
-            ) : <span>Sign In</span>}
+            {loading ? <LoadingSpinner size="sm" /> : <span>Sign In</span>}
           </button>
-
-          <div className="text-center pt-8 border-t border-slate-100 mt-8">
-            <p className="text-[12px] text-slate-400 font-bold uppercase tracking-widest">
-              New here?{' '}
-              <Link to="/register" className="text-brand-primary font-black hover:underline transition-all ml-1">
-                Create Account
-              </Link>
-            </p>
-          </div>
         </form>
+      </div>
+
+      {/* Public Display Links */}
+      <div className="w-full max-w-md space-y-4">
+        <div className="flex items-center gap-4">
+           <div className="h-px flex-1 bg-border/40"></div>
+           <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em]">Kitchen Displays</span>
+           <div className="h-px flex-1 bg-border/40"></div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <Link 
+            to="/kitchen" 
+            className="flex flex-col items-center justify-center p-4 rounded-xl bg-surface/30 border border-border/40 hover:border-brand-primary hover:bg-brand-primary/5 transition-all group"
+          >
+            <span className="text-[10px] font-black text-text-primary uppercase tracking-widest group-hover:text-brand-primary transition-none text-center">Master Kitchen</span>
+            <span className="text-[8px] font-bold text-text-muted mt-1 uppercase">All Orders</span>
+          </Link>
+          
+          {kitchens.map(k => (
+            <Link 
+              key={k._id}
+              to={`/kitchen/${encodeURIComponent(k.name)}`}
+              className="flex flex-col items-center justify-center p-4 rounded-xl bg-surface/30 border border-border/40 hover:border-brand-primary hover:bg-brand-primary/5 transition-all group"
+            >
+              <span className="text-[10px] font-black text-text-primary uppercase tracking-widest group-hover:text-brand-primary transition-none text-center truncate w-full">{k.name}</span>
+              <span className="text-[8px] font-bold text-text-muted mt-1 uppercase">Station Display</span>
+            </Link>
+          ))}
+        </div>
+        
+        <p className="text-center text-[9px] text-text-muted/60 font-medium uppercase tracking-[0.1em]">
+          Public displays do not require authentication for monitoring.
+        </p>
       </div>
     </div>
   );
