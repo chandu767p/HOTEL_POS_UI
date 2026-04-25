@@ -4,42 +4,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        dark: {
-          950: '#030712', // deeper dark
-          900: '#0B1220', // main background (soft dark)
-          850: '#0F172A', // sub-surface
-          800: '#111827', // cards/surfaces
-          700: '#1F2937', // card hover/lighter surface
-          600: '#374151', // muted borders
+        background: '#0f172a',
+        surface: '#111827',
+        border: '#1f2937',
+        text: {
+          primary: '#f1f5f9', // slate-100
+          secondary: '#94a3b8', // slate-400
+          muted: '#64748b', // slate-500
         },
         brand: {
-          primary: '#3B82F6', // modern SaaS blue
-          secondary: '#94A3B8', // muted secondary text
-          accent: '#22C55E', // success green
-          'grad-start': '#22C55E',
-          'grad-mid': '#06B6D4',
-          'grad-end': '#3B82F6',
-        },
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          900: '#1e3a8a',
+          primary: '#3b82f6', // blue-500
+          success: '#10b981', // emerald-500
+          warning: '#f59e0b', // amber-500
+          danger: '#ef4444', // red-500
+          info: '#6366f1', // indigo-500
         },
       },
       fontFamily: {
         sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['"Outfit"', '"Inter"', 'sans-serif'],
-      },
-      backgroundImage: {
-        'brand-gradient': 'linear-gradient(90deg, #22C55E, #06B6D4, #3B82F6)',
       },
       boxShadow: {
-        'saas-card': '0 10px 25px rgba(0, 0, 0, 0.3)',
-        'saas-hover': '0 20px 35px rgba(0, 0, 0, 0.4)',
+        'flat': 'none',
+        'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
       },
+      borderRadius: {
+        'xl': '0.75rem',
+        '2xl': '1rem',
+      }
     },
   },
   plugins: [],

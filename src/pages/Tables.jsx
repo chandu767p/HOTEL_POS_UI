@@ -18,7 +18,7 @@ export default function Tables() {
   const fetchTables = useCallback(async () => {
     try {
       const res = await api.get('/tables');
-      const sorted = res.data.sort((a, b) => 
+      const sorted = res.data.sort((a, b) =>
         a.number.localeCompare(b.number, undefined, { numeric: true, sensitivity: 'base' })
       );
       setTables(sorted);
@@ -69,27 +69,27 @@ export default function Tables() {
   const getStatusStyles = (status) => {
     switch (status) {
       case 'available': return {
-        badge: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-        dot: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]',
-        card: 'hover:border-emerald-200'
+        badge: 'status-green',
+        dot: 'bg-brand-success',
+        card: 'border-transparent hover:border-brand-primary'
       };
       case 'occupied': return {
-        badge: 'bg-rose-50 text-rose-600 border-rose-100',
-        dot: 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.3)]',
-        card: 'border-rose-100 bg-rose-50/30 hover:border-rose-200'
+        badge: 'status-red',
+        dot: 'bg-brand-danger',
+        card: 'border-brand-danger/30 bg-brand-danger/5'
       };
       case 'reserved': return {
-        badge: 'bg-amber-50 text-amber-600 border-amber-100',
-        dot: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]',
-        card: 'border-amber-100'
+        badge: 'status-orange',
+        dot: 'bg-brand-warning',
+        card: 'border-brand-warning/30'
       };
-      default: return { badge: 'bg-slate-50 text-slate-400 border-slate-100', dot: 'bg-slate-200', card: '' };
+      default: return { badge: 'bg-border/50 text-text-muted', dot: 'bg-text-muted', card: '' };
     }
   };
 
   if (loading) return (
-    <div className="flex items-center justify-center p-32">
-      <div className="w-12 h-12 border-4 border-slate-200 border-t-brand-primary rounded-full animate-spin"></div>
+    <div className="flex items-center justify-center h-[80vh] bg-background">
+      <LoadingSpinner />
     </div>
   );
 
@@ -97,36 +97,45 @@ export default function Tables() {
   const occupied = tables.filter(t => t.status === 'occupied').length;
 
   return (
-    <div className="max-w-[1600px] mx-auto py-2">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-6 mb-12">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Table Layout</h1>
-          <div className="flex items-center gap-6 mt-4">
-            <span className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-600">
-              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Tables</h1>
+          <div className="flex items-center gap-4 mt-2">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-brand-success uppercase">
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-success"></div>
               {available} Available
             </span>
-            <span className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-rose-600">
-              <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-brand-danger uppercase">
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-danger"></div>
               {occupied} Occupied
             </span>
-            <span className="flex items-center gap-1.5 text-xs font-bold text-gray-400">
+            <span className="text-[11px] font-semibold text-text-muted uppercase">
               {tables.length} Total
             </span>
           </div>
         </div>
-        <div className="flex gap-3">
-          <button onClick={fetchTables} className="btn-secondary p-3.5">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        <div className="flex gap-2">
+          <button onClick={fetchTables} className="btn-secondary p-2.5 rounded-lg group">
+            <svg className="w-4 h-4 text-text-muted group-hover:text-text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="btn-primary py-4 px-8 text-xs uppercase tracking-widest"
+            onClick={() => navigate('/order/walkin')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary/10 text-brand-primary border border-brand-primary/20 rounded-lg hover:bg-brand-primary hover:text-white transition-none text-xs font-bold uppercase tracking-wider"
           >
-            Initialize Table
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Walk-in Order
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="btn-primary"
+          >
+            Add Table
           </button>
         </div>
       </div>
@@ -138,82 +147,74 @@ export default function Tables() {
           return (
             <div
               key={table._id}
-              className={`group card p-8 transition-all duration-300 relative cursor-pointer active:scale-95 ${styles.card}`}
+              className={`group card  border-white text-white p-6 transition-none relative cursor-pointer ${styles.card}`}
               onClick={() => handleTableClick(table)}
             >
               <button
                 onClick={(e) => { e.stopPropagation(); handleDeleteTable(table); }}
-                className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute top-2 right-2 p-1.5 rounded text-text-muted hover:text-brand-danger hover:bg-background  transition-none z-10"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
 
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black mb-6 transition-all duration-500
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold mb-5 transition-none
                 ${table.status === 'occupied'
-                  ? 'bg-rose-100 text-rose-600 border border-rose-200 shadow-sm'
-                  : 'bg-slate-50 text-slate-400 border border-slate-100 group-hover:bg-brand-primary group-hover:text-white group-hover:border-brand-primary group-hover:shadow-lg group-hover:shadow-brand-primary/20'}`}>
+                  ? 'bg-brand-danger text-white'
+                  : 'bg-background text-text-muted border border-border group-hover:border-brand-primary group-hover:text-brand-primary'}`}>
                 {table.number}
               </div>
 
-              <div className="mb-4">
-                <div className={`badge py-1 px-3 border ${styles.badge}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${styles.dot} mr-2`}></div>
+              <div className="mb-3">
+                <span className={`badge ${styles.badge} text-[10px]`}>
                   {table.status}
-                </div>
+                </span>
               </div>
 
-              <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">{table.capacity} Capacity</p>
+              <p className="text-text-muted text-[11px] font-medium uppercase tracking-tight">{table.capacity} Capacity</p>
 
-              <div className={`mt-6 pt-5 border-t border-slate-100 text-[10px] font-black uppercase tracking-widest transition-colors
-                ${table.status === 'occupied' ? 'text-rose-500' : 'text-slate-400 group-hover:text-brand-primary'}`}>
-                {table.status === 'occupied' ? 'View Order →' : 'Open Session →'}
+              <div className={`mt-5 pt-4 border-t border-border/50 text-[10px] font-bold uppercase tracking-wider transition-none
+                ${table.status === 'occupied' ? 'text-brand-danger' : 'text-text-muted group-hover:text-brand-primary'}`}>
+                {table.status === 'occupied' ? 'View Order →' : 'Book Table →'}
               </div>
             </div>
           );
         })}
 
         {tables.length === 0 && (
-          <div className="col-span-full py-40 text-center bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[2.5rem]">
-            <div className="w-20 h-20 rounded-3xl bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </div>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-[11px]">Add your first table →</p>
+          <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl">
+            <p className="text-text-muted font-semibold uppercase tracking-widest text-xs">No tables found</p>
           </div>
         )}
       </div>
 
-      {/* Initialize Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Initialize Grid Node">
-        <form onSubmit={handleCreateTable} className="space-y-8 pt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="form-label">Table Identity *</label>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="New Table">
+        <form onSubmit={handleCreateTable} className="space-y-6 pt-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="form-label">Table ID</label>
               <input
                 className="form-input"
                 value={tableForm.number}
                 onChange={e => setTableForm(p => ({ ...p, number: e.target.value }))}
-                placeholder="e.g. T-01"
+                placeholder="01"
                 required
               />
             </div>
-            <div className="space-y-2">
-              <label className="form-label">Occupancy Capacity</label>
+            <div className="space-y-1.5">
+              <label className="form-label">Capacity</label>
               <input
                 type="number"
                 min="1"
-                max="50"
                 className="form-input"
                 value={tableForm.capacity}
                 onChange={e => setTableForm(p => ({ ...p, capacity: parseInt(e.target.value) || 1 }))}
               />
             </div>
           </div>
-          <button disabled={submitting} type="submit" className="btn-primary w-full py-5 text-[12px] uppercase tracking-[0.2em]">
-            {submitting ? 'Initializing...' : 'Authorize Node Entry'}
+          <button disabled={submitting} type="submit" className="btn-primary w-full py-3 text-xs uppercase tracking-widest">
+            {submitting ? 'Creating...' : 'Create Table'}
           </button>
         </form>
       </Modal>

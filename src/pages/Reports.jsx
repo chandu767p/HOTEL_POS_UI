@@ -19,12 +19,12 @@ export default function Reports() {
         startDate: dateRange.startDate,
         endDate: `${dateRange.endDate}T23:59:59.999Z`
       };
-      
+
       const [ordersRes, bestSellersRes] = await Promise.all([
         api.get('/orders', { params }),
         api.get('/orders/best-sellers', { params: { ...params, limit: 10 } })
       ]);
-      
+
       setOrders(ordersRes.data);
       setBestSellers(bestSellersRes.data);
     } catch (err) {
@@ -44,7 +44,7 @@ export default function Reports() {
 
   const exportCSV = () => {
     const headers = ['Order ID', 'Date', 'Time', 'Table', 'Waiter', 'Total Amount', 'Status', 'Payment Method'];
-    
+
     const rows = orders.map(o => {
       const dateObj = new Date(o.createdAt);
       return [
@@ -59,7 +59,7 @@ export default function Reports() {
       ].map(val => `"${val}"`); // Wrap in quotes to handle any commas in values
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + [headers.map(h => `"${h}"`), ...rows].map(e => e.join(",")).join("\n");
 
     const encodedUri = encodeURI(csvContent);
@@ -72,51 +72,48 @@ export default function Reports() {
   };
 
   const stats = [
-    { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: '💰', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Total Orders', value: orders.length, icon: '📋', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Avg. Order Value', value: `$${avgOrderValue.toFixed(2)}`, icon: '📈', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: '💰', color: 'text-brand-success', bg: 'bg-brand-success/5', border: 'border-brand-success/10' },
+    { label: 'Orders', value: orders.length, icon: '📋', color: 'text-brand-info', bg: 'bg-brand-info/5', border: 'border-brand-info/10' },
+    { label: 'Avg Order', value: `$${avgOrderValue.toFixed(2)}`, icon: '📈', color: 'text-brand-primary', bg: 'bg-brand-primary/5', border: 'border-brand-primary/10' },
   ];
 
   return (
-    <div className="p-4 md:p-8 space-y-8 bg-white h-full min-h-screen">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight">Sales Reports</h1>
-          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-2">Generate and export performance data</p>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Business Reports</h1>
+          <p className="text-text-muted text-xs mt-1">Operational performance metrics</p>
         </div>
-        
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">From Date</label>
-            <input 
-              type="date" 
-              className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all"
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              className="form-input py-2 text-xs"
               value={dateRange.startDate}
-              onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
+              onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
             />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">To Date</label>
-            <input 
-              type="date" 
-              className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all"
+            <span className="text-text-muted text-xs">to</span>
+            <input
+              type="date"
+              className="form-input py-2 text-xs"
               value={dateRange.endDate}
-              onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
+              onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
             />
           </div>
-          <button 
+          <button
             onClick={fetchReports}
-            className="px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
+            className="btn-secondary px-4 py-2 text-[11px] font-bold uppercase tracking-wider"
           >
-            Generate
+            Update
           </button>
-          <button 
+          <button
             onClick={exportCSV}
             disabled={orders.length === 0}
-            className="px-6 py-3 bg-brand-primary text-white rounded-xl text-sm font-bold hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-2"
+            className="btn-primary px-4 py-2 text-[11px] font-bold uppercase tracking-wider disabled:opacity-50"
           >
-            Export CSV
+            Export
           </button>
         </div>
       </div>
@@ -124,88 +121,98 @@ export default function Reports() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((s, i) => (
-          <div key={i} className={`p-6 rounded-2xl border border-slate-100 ${s.bg} border shadow-sm`}>
-            <div className="text-2xl mb-2">{s.icon}</div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{s.label}</p>
-            <p className={`text-3xl font-black ${s.color} mt-1`}>{s.value}</p>
+          <div key={i} className={`card p-6 border-t-2 ${s.border.replace('border-', 'border-t-')}`}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{s.label}</p>
+              <div className={`w-8 h-8 rounded-lg ${s.bg.replace('/5', '/10')} flex items-center justify-center text-base`}>
+                {s.icon}
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-text-primary tracking-tight">{s.value}</p>
+            <div className="flex items-center gap-1.5 mt-2">
+              <div className={`w-1 h-1 rounded-full ${s.color.replace('text-', 'bg-')}`}></div>
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Historical Performance</p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Top Performers & Orders Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Top 10 Best Sellers */}
-        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-50 bg-slate-50/30">
-            <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-              <span className="text-xl">🏆</span> Top 10 Performers
-            </h2>
+        {/* Best Sellers */}
+        <div className="lg:col-span-1 card overflow-hidden">
+          <div className="px-5 py-4 border-b border-border bg-surface/50">
+            <h2 className="text-xs font-bold text-text-primary uppercase tracking-widest">Best Selling Items</h2>
           </div>
           <div className="p-2">
             {loading ? (
-              <div className="py-20 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">Loading stats...</div>
+              <div className="py-12 text-center text-text-muted text-xs font-semibold uppercase">Analyzing...</div>
             ) : bestSellers.length > 0 ? (
               <div className="space-y-1">
                 {bestSellers.map((item, i) => (
-                  <div key={item._id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors group">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 font-black text-xs group-hover:bg-brand-primary group-hover:text-white transition-all">
+                  <div key={item._id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-background transition-none group">
+                    <div className="w-7 h-7 rounded bg-background border border-border flex items-center justify-center text-text-muted font-bold text-[11px] group-hover:text-brand-primary group-hover:border-brand-primary transition-none">
                       {i + 1}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-slate-700">{item.name}</p>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{item.totalSold} sold</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-text-primary truncate uppercase tracking-tight">{item.name}</p>
+                      <p className="text-[10px] font-semibold text-text-muted uppercase mt-0.5">{item.totalSold} sold</p>
                     </div>
-                    <p className="text-sm font-black text-slate-800">${item.revenue.toFixed(2)}</p>
+                    <p className="text-sm font-bold text-text-primary tracking-tight">${item.revenue.toFixed(2)}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="py-20 text-center text-slate-300 text-xs font-bold uppercase tracking-widest">No data found</div>
+              <div className="py-12 text-center text-text-muted text-xs font-semibold uppercase">No data</div>
             )}
           </div>
         </div>
 
-        {/* Orders Table */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-50 bg-slate-50/30">
-            <h2 className="text-lg font-black text-slate-800">Order Details</h2>
+        {/* Transaction Table */}
+        <div className="lg:col-span-2 card overflow-hidden">
+          <div className="px-5 py-4 border-b border-border bg-surface/50">
+            <h2 className="text-xs font-bold text-text-primary uppercase tracking-widest">Transaction History</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="table-minimal">
               <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Table</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waiter</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Time</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Table</th>
+                  <th>Waiter</th>
+                  <th>Time</th>
+                  <th>Total</th>
+                  <th>Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400 text-sm font-medium">Loading report data...</td>
+                    <td colSpan="6" className="py-12 text-center text-text-muted text-xs font-semibold uppercase">Fetching records...</td>
                   </tr>
                 ) : orders.length > 0 ? (
                   orders.map((o) => (
-                    <tr key={o._id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="text-xs font-black text-slate-400 uppercase">#{o._id.toString().slice(-6)}</span>
+                    <tr key={o._id} className="group">
+                      <td>
+                        <span className="text-[11px] font-mono font-bold text-text-muted group-hover:text-brand-primary">#{o._id.toString().slice(-6).toUpperCase()}</span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-bold text-slate-700">Table {o.table?.number || '??'}</span>
+                      <td>
+                        <span className="text-xs font-bold text-text-primary uppercase tracking-tight">Table {o.table?.number || '??'}</span>
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-slate-600">{o.waiter?.name}</td>
-                      <td className="px-6 py-4 text-xs font-medium text-slate-500">
-                        {new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <td>
+                        <span className="text-xs font-semibold text-text-muted uppercase">{o.waiter?.name}</span>
                       </td>
-                      <td className="px-6 py-4 text-sm font-black text-slate-800">${o.totalAmount.toFixed(2)}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                          o.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 
-                          o.status === 'cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
-                        }`}>
+                      <td>
+                        <span className="text-[11px] font-bold text-text-muted uppercase">
+                          {new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="text-sm font-bold text-text-primary tracking-tight">${o.totalAmount.toFixed(2)}</span>
+                      </td>
+                      <td>
+                        <span className={`badge text-[10px] ${o.status === 'paid' ? 'status-green' :
+                            o.status === 'cancelled' ? 'status-red' : 'status-blue'
+                          }`}>
                           {o.status}
                         </span>
                       </td>
@@ -213,7 +220,7 @@ export default function Reports() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400 text-sm font-medium">No orders found for the selected range</td>
+                    <td colSpan="6" className="py-12 text-center text-text-muted text-xs font-semibold uppercase">No records found</td>
                   </tr>
                 )}
               </tbody>

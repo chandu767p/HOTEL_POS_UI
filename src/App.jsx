@@ -1,55 +1,58 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Layout from './components/common/Layout';
+import PrivateRoute from './components/common/PrivateRoute';
+
+// Pages
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
+import Roles from './pages/Roles';
 import Tables from './pages/Tables';
-import MenuManager from './pages/MenuManager';
+
 import Orders from './pages/Orders';
 import OrderPortal from './pages/OrderPortal';
 import Kitchens from './pages/Kitchens';
+import KitchenDashboard from './pages/KitchenDashboard';
+import MenuManager from './pages/MenuManager';
+import Inventory from './pages/Inventory';
+import CustomerOrder from './pages/CustomerOrder';
 import Reports from './pages/Reports';
-import PrivateRoute from './components/common/PrivateRoute';
 
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
+    <ToastProvider>
       <AuthProvider>
-        <ToastProvider>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+        <Router>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/order" element={<CustomerOrder />} />
+            <Route path="/kitchen/:kitchenId?" element={<KitchenDashboard />} />
 
+            {/* Protected POS routes */}
+            <Route element={<Layout />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+              <Route path="/tables" element={<PrivateRoute><Tables /></PrivateRoute>} />
+              <Route path="/order/:tableId" element={<PrivateRoute><OrderPortal /></PrivateRoute>} />
+              <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
+              <Route path="/menu" element={<PrivateRoute><MenuManager /></PrivateRoute>} />
+              <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
+              <Route path="/roles" element={<PrivateRoute><Roles /></PrivateRoute>} />
+              <Route path="/inventory" element={<PrivateRoute><Inventory /></PrivateRoute>} />
+              <Route path="/kitchens" element={<PrivateRoute><Kitchens /></PrivateRoute>} />
+              <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
+            </Route>
 
-              {/* Main app with Layout */}
-              <Route
-                path="/"
-                element={
-                  <PrivateRoute>
-                    <Layout />
-                  </PrivateRoute>
-                }
-              >
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="tables" element={<Tables />} />
-                <Route path="order/:tableId" element={<OrderPortal />} />
-                <Route path="menu" element={<MenuManager />} />
-                <Route path="orders" element={<Orders />} />
-                <Route path="users" element={<Users />} />
-                <Route path="kitchens" element={<Kitchens />} />
-                <Route path="reports" element={<Reports />} />
-              </Route>
-
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </ToastProvider>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
       </AuthProvider>
-    </BrowserRouter>
+    </ToastProvider>
   );
 }
+
+export default App;
